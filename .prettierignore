@@ -1,0 +1,6 @@
+.git
+.parcel-cache
+node_modules
+/app
+/dist
+/dist-dev

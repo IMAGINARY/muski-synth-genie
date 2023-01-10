@@ -1,0 +1,98 @@
+{
+  "name": "typescript-library-with-demo-app",
+  "version": "0.0.0",
+  "description": "Template for TypeScript library with demo app",
+  "author": {
+    "name": "author-name",
+    "email": "author-email"
+  },
+  "repository": "",
+  "bugs": {
+    "url": "issue-tracker",
+    "email": "author-email"
+  },
+  "license": "MIT",
+  "engines": {
+    "npm": ">=8.0.0",
+    "node": ">=16.0.0"
+  },
+  "browserslist": [
+    "> 0.2% and not dead"
+  ],
+  "source": "src/lib/ts/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "targets": {
+    "app": {
+      "source": [
+        "/src/app/html/index.html"
+      ],
+      "distDir": "app",
+      "isLibrary": false,
+      "context": "browser",
+      "optimize": true,
+      "engines": {
+        "browsers": [
+          "> 0.2% and not dead"
+        ]
+      }
+    },
+    "main": {},
+    "module": {},
+    "types": {}
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@parcel/packager-ts": "2.8.2",
+    "@parcel/transformer-inline-string": "2.8.2",
+    "@parcel/transformer-sass": "2.8.2",
+    "@parcel/transformer-typescript-tsc": "2.8.2",
+    "@parcel/transformer-typescript-types": "2.8.2",
+    "@types/assert": "^1.5.6",
+    "@types/document-ready": "^2.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "eslint": "^8.30.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-compat": "^4.0.2",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.6.1",
+    "eslint-plugin-react": "^7.31.11",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "parcel": "2.8.2",
+    "parcel-namer-rewrite": "^2.0.0-rc.3",
+    "prettier": "^2.8.1",
+    "rimraf": "^3.0.2",
+    "stylelint": "^14.16.0",
+    "stylelint-config-html": "^1.1.0",
+    "stylelint-config-prettier-scss": "^0.0.1",
+    "stylelint-config-standard-scss": "^6.1.0",
+    "typedoc": "^0.23.23",
+    "typedoc-plugin-rename-defaults": "^0.6.4",
+    "typescript": "^4.9.4",
+    "typescript-plugin-css-modules": "^4.1.1"
+  },
+  "scripts": {
+    "serve": "parcel serve --dist-dir dist-dev --target app",
+    "watch:app": "parcel watch --target app",
+    "clean": "npm run clean:lib && npm run clean:app",
+    "clean:lib": "rimraf dist/index.*",
+    "clean:app": "rimraf app",
+    "build": "npm run clean && parcel build --public-url .",
+    "build:lib": "npm run clean:lib && parcel build --public-url . --target main --target module --target types",
+    "build:app": "npm run clean:app && parcel build --public-url . --target app",
+    "format": "prettier --write '.'",
+    "doc": "typedoc",
+    "lint": "npm run lint:scripts; npm run lint:styles",
+    "lint:scripts": "cd src/ && eslint '{**/*,*}.{js,ts,jsx,tsx}'",
+    "lint:styles": "cd src/ && stylelint '{**/*,*}.{css,scss}'",
+    "lint:fix": "npm run lint:fix:scripts; npm run lint:fix:styles",
+    "lint:fix:scripts": "cd src/ && eslint --fix '{**/*,*}.{js,ts,jsx,tsx}'",
+    "lint:fix:styles": "cd src/ && stylelint --fix '{**/*,*}.{css,scss}'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

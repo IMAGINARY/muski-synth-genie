@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "declaration": true,
+    "declarationMap": true,
+    "strict": true,
+    "alwaysStrict": true,
+    "esModuleInterop": true,
+    "module": "es2022",
+    "target": "es2022",
+    "moduleResolution": "node",
+    "lib": ["ES2021", "dom", "dom.iterable"],
+    "typeRoots": ["./lib/ts", "../node_modules/@types"],
+    "plugins": [{ "name": "typescript-plugin-css-modules" }]
+  },
+  "include": ["./lib/ts/**/*", "./app/ts/**/*"]
+}
