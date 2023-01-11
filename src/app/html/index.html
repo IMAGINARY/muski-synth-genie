@@ -6,9 +6,29 @@
       name="viewport"
       content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1"
     />
-    <title>Hello World Demo App</title>
+    <title>Synth Genie Demo App</title>
     <link rel="stylesheet" href="../scss/main.scss" />
-    <script src="../ts/index.ts" type="module"></script>
+    <script src="../ts/separate-bundle.ts" type="module"></script>
   </head>
-  <body></body>
+  <body>
+    <div id="synth-genie-wrapper"><div id="synth-genie"></div></div>
+    <br />
+    Number of notes: <span id="num-notes-label"></span>
+    <br />
+    <input
+      id="num-notes-slider"
+      type="range"
+      min="1"
+      max="256"
+      value="16"
+      step="1"
+    /><br />
+    <input id="reset-state-checkbox" type="checkbox" checked /><span
+      >Call
+      <span style="font-family: monospace">pianoGenie.resetState()</span>
+      after each loop</span
+    ><br /><br />
+    <input id="clear-button" type="button" value="Clear" />
+    <script src="../ts/index.ts" type="module"></script>
+  </body>
 </html>

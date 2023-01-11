@@ -7,11 +7,21 @@ body {
   overflow: hidden;
 }
 
-#viewer {
+#synth-genie-wrapper {
+  position: relative;
+  width: calc(512px + 2px);
+  height: calc(256px + 2px);
+}
+
+#synth-genie {
   position: absolute;
   width: 100%;
   height: 100%;
   overflow: hidden;
+}
+
+#num-notes-slider {
+  width: 512px;
 }
 
 #console-log-div {
