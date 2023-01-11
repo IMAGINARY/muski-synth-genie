@@ -93,6 +93,10 @@ export default class SynthGenie {
 
   protected resetStateOnLoop: boolean;
 
+  protected showGrid: boolean;
+
+  protected showBar: boolean;
+
   protected constructor(
     element: Element,
     options: Partial<SynthGenieOptions> = {},
@@ -104,6 +108,8 @@ export default class SynthGenie {
     this.position = 0;
     this.loopCount = 0;
     this.resetStateOnLoop = true;
+    this.showGrid = true;
+    this.showBar = true;
 
     const gridLayer = document.createElement('canvas');
     gridLayer.width = CANVAS_WIDTH;
@@ -178,6 +184,26 @@ export default class SynthGenie {
     assert(resetStateCheckBox !== null);
     resetStateCheckBox.addEventListener('input', () => {
       this.resetStateOnLoop = resetStateCheckBox.checked;
+    });
+
+    const gridActiveCheckBox =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#grid-active-checkbox',
+      );
+    assert(gridActiveCheckBox !== null);
+    gridActiveCheckBox.addEventListener('input', () => {
+      this.showGrid = gridActiveCheckBox.checked;
+      this.updateGrid();
+    });
+
+    const barVisibleCheckBox =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#bar-visible-checkbox',
+      );
+    assert(barVisibleCheckBox !== null);
+    barVisibleCheckBox.addEventListener('input', () => {
+      this.showBar = barVisibleCheckBox.checked;
+      this.updateGrid();
     });
 
     const clearButton =
@@ -320,9 +346,17 @@ export default class SynthGenie {
     const gridLayerContext = this.gridLayer.getContext('2d');
     assert(gridLayerContext !== null);
     gridLayerContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    SynthGenie.paintBar(gridLayerContext, this.position, this.numNotes);
-    SynthGenie.paintCells(gridLayerContext, this.activatedCells, this.numNotes);
-    SynthGenie.paintGrid(gridLayerContext, this.numNotes);
+    if (this.showBar) {
+      SynthGenie.paintBar(gridLayerContext, this.position, this.numNotes);
+    }
+    if (this.showGrid) {
+      SynthGenie.paintCells(
+        gridLayerContext,
+        this.activatedCells,
+        this.numNotes,
+      );
+      SynthGenie.paintGrid(gridLayerContext, this.numNotes);
+    }
   }
 
   protected static paintGrid(context: RenderingContext2D, numNotes: number) {
