@@ -283,8 +283,6 @@ export default class SynthGenie {
     await genie.initialize();
     console.log('🧞‍♀️ ready!');
 
-    genie.overrideDeltaTime(NOTE_DURATION_MS);
-
     const nextNote = () => {
       const cell = this.activatedCells[this.position];
       if (cell !== -1) {
