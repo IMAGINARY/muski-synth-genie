@@ -387,7 +387,7 @@ export default class SynthGenie {
   ) {
     context.save();
     context.beginPath();
-    context.fillStyle = 'blue';
+    context.fillStyle = '#6fbbd3';
     const stepX = CANVAS_WIDTH / numNotes;
     const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
     for (let i = 0; i < cells.length; i += 1) {
@@ -408,7 +408,7 @@ export default class SynthGenie {
     numNotes: number,
   ) {
     context.save();
-    context.fillStyle = 'lightblue';
+    context.fillStyle = '#add8e6';
     const stepX = CANVAS_WIDTH / numNotes;
     const x = stepX * pos;
     context.fillRect(x, 0, stepX, CANVAS_WIDTH);
