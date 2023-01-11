@@ -309,6 +309,12 @@ export default class SynthGenie {
     assert(context !== null);
     context.save();
     context.beginPath();
+    context.clearRect(
+      Math.min(prevX, x),
+      0,
+      Math.abs(prevX - x),
+      CANVAS_HEIGHT,
+    );
     context.moveTo(prevX, prevY);
     context.lineTo(x, y);
     context.stroke();
