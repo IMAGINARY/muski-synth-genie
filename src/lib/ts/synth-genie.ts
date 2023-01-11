@@ -91,6 +91,8 @@ export default class SynthGenie {
 
   protected synth: Tone.AMSynth;
 
+  protected beatLength: number;
+
   protected relativeNoteLength: number;
 
   protected resetStateOnLoop: boolean;
@@ -112,6 +114,7 @@ export default class SynthGenie {
     this.resetStateOnLoop = true;
     this.showGrid = true;
     this.showBar = true;
+    this.beatLength = 250;
     this.relativeNoteLength = 1.0;
 
     const gridLayer = document.createElement('canvas');
@@ -179,6 +182,24 @@ export default class SynthGenie {
       this.updateGrid();
       this.genie.resetState();
     });
+
+    const beatLengthLabel =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#beat-length-label',
+      );
+    assert(beatLengthLabel !== null);
+
+    const beatLengthSlider =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#beat-length-slider',
+      );
+    assert(beatLengthSlider !== null);
+    const handleBeatLengthChange = () => {
+      beatLengthLabel.innerText = `${beatLengthSlider.value}ms`;
+      this.beatLength = beatLengthSlider.valueAsNumber;
+    };
+    handleBeatLengthChange();
+    beatLengthSlider.addEventListener('input', handleBeatLengthChange);
 
     const noteLengthLabel =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
@@ -264,7 +285,7 @@ export default class SynthGenie {
 
     genie.overrideDeltaTime(NOTE_DURATION_MS);
 
-    setInterval(() => {
+    const nextNote = () => {
       const cell = this.activatedCells[this.position];
       if (cell !== -1) {
         const pitch = genie.nextFromKeyList(cell, keyWhitelist, TEMPERATURE);
@@ -285,7 +306,9 @@ export default class SynthGenie {
         if (this.resetStateOnLoop) genie.resetState();
         console.log('loop');
       }
-    }, NOTE_DURATION_MS);
+      setTimeout(nextNote, this.beatLength);
+    };
+    nextNote();
   }
 
   getOptions() {
