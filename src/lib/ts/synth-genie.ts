@@ -47,6 +47,12 @@ for (let octave = 0; octave < OCTAVES; octave += 1) {
 }
 console.log(keyWhitelist);
 
+function computeAllowedNotes(minMidiNote: number, maxMidiNote: number) {
+  const numNotes = Math.max(0, maxMidiNote - minMidiNote);
+  const notes = new Array(numNotes).fill(0).map((_, i) => minMidiNote + i);
+  return notes;
+}
+
 const TEMPERATURE = 0.25;
 
 const CANVAS_WIDTH = 512;
@@ -95,6 +101,12 @@ export default class SynthGenie {
 
   protected relativeNoteLength: number;
 
+  protected minMidiNote: number;
+
+  protected maxMidiNote: number;
+
+  protected allowedNotes: number[];
+
   protected resetStateOnLoop: boolean;
 
   protected showGrid: boolean;
@@ -116,6 +128,9 @@ export default class SynthGenie {
     this.showBar = true;
     this.beatLength = 250;
     this.relativeNoteLength = 1.0;
+    this.minMidiNote = 21;
+    this.maxMidiNote = 21 + 12 * 7;
+    this.allowedNotes = computeAllowedNotes(this.maxMidiNote, this.maxMidiNote);
 
     const gridLayer = document.createElement('canvas');
     gridLayer.width = CANVAS_WIDTH;
@@ -219,6 +234,61 @@ export default class SynthGenie {
     handleNoteLengthChange();
     noteLengthSlider.addEventListener('input', handleNoteLengthChange);
 
+    const minMidiNoteLabel =
+      this.element.ownerDocument.querySelector<HTMLSpanElement>(
+        '#min-midi-note-label',
+      );
+    assert(minMidiNoteLabel !== null);
+    const minMidiNoteSlider =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#min-midi-note-slider',
+      );
+    assert(minMidiNoteSlider !== null);
+
+    const maxMidiNoteLabel =
+      this.element.ownerDocument.querySelector<HTMLSpanElement>(
+        '#max-midi-note-label',
+      );
+    assert(maxMidiNoteLabel !== null);
+    const maxMidiNoteSlider =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#max-midi-note-slider',
+      );
+    assert(maxMidiNoteSlider !== null);
+
+    const handleMinMidiNoteChange = () => {
+      const midiNote = minMidiNoteSlider.valueAsNumber;
+      const noteName = Tone.Frequency(midiNote, 'midi').toNote();
+      minMidiNoteLabel.innerText = `${noteName} (MIDI ${midiNote})`;
+      this.minMidiNote = minMidiNoteSlider.valueAsNumber;
+      if (maxMidiNoteSlider.valueAsNumber < midiNote + 2) {
+        maxMidiNoteSlider.valueAsNumber = midiNote + 2;
+        handleMaxMidiNoteChange();
+      }
+      this.allowedNotes = computeAllowedNotes(
+        this.minMidiNote,
+        this.maxMidiNote,
+      );
+    };
+    handleMinMidiNoteChange();
+    minMidiNoteSlider.addEventListener('input', handleMinMidiNoteChange);
+    const handleMaxMidiNoteChange = () => {
+      const midiNote = maxMidiNoteSlider.valueAsNumber;
+      const noteName = Tone.Frequency(midiNote, 'midi').toNote();
+      maxMidiNoteLabel.innerText = `${noteName} (MIDI ${midiNote})`;
+      this.maxMidiNote = midiNote;
+      if (minMidiNoteSlider.valueAsNumber > midiNote - 2) {
+        minMidiNoteSlider.valueAsNumber = midiNote - 2;
+        handleMinMidiNoteChange();
+      }
+      this.allowedNotes = computeAllowedNotes(
+        this.minMidiNote,
+        this.maxMidiNote,
+      );
+    };
+    handleMaxMidiNoteChange();
+    maxMidiNoteSlider.addEventListener('input', handleMaxMidiNoteChange);
+
     const resetStateCheckBox =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
         '#reset-state-checkbox',
@@ -286,7 +356,14 @@ export default class SynthGenie {
     const nextNote = () => {
       const cell = this.activatedCells[this.position];
       if (cell !== -1) {
-        const pitch = genie.nextFromKeyList(cell, keyWhitelist, TEMPERATURE);
+        // we want low cell numbers (vertically at the top) to correspond
+        // with high pitches. Therefore, "invert" the cell id.
+        const genieButton = NUM_BUTTONS - 1 - cell;
+        const pitch = genie.nextFromKeyList(
+          genieButton,
+          this.allowedNotes,
+          TEMPERATURE,
+        );
         //        this.player.playNoteDown({ pitch });
         const frequency = Tone.Frequency(pitch, 'midi').toFrequency();
         this.synth.triggerAttackRelease(

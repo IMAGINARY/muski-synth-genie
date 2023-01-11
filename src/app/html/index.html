@@ -43,6 +43,26 @@
       value="50"
       step="1"
     /><br />
+    Lowest note generated: <span id="min-midi-note-label"></span>
+    <br />
+    <input
+      id="min-midi-note-slider"
+      type="range"
+      min="0"
+      max="125"
+      value="21"
+      step="1"
+    /><br />
+    Highest note generated: <span id="max-midi-note-label"></span>
+    <br />
+    <input
+      id="max-midi-note-slider"
+      type="range"
+      min="2"
+      max="127"
+      value="105"
+      step="1"
+    /><br />
     <input id="reset-state-checkbox" type="checkbox" checked /><span
       >Call
       <span style="font-family: monospace">pianoGenie.resetState()</span>
