@@ -91,6 +91,8 @@ export default class SynthGenie {
 
   protected synth: Tone.AMSynth;
 
+  protected relativeNoteLength: number;
+
   protected resetStateOnLoop: boolean;
 
   protected showGrid: boolean;
@@ -110,6 +112,7 @@ export default class SynthGenie {
     this.resetStateOnLoop = true;
     this.showGrid = true;
     this.showBar = true;
+    this.relativeNoteLength = 1.0;
 
     const gridLayer = document.createElement('canvas');
     gridLayer.width = CANVAS_WIDTH;
@@ -176,6 +179,24 @@ export default class SynthGenie {
       this.updateGrid();
       this.genie.resetState();
     });
+
+    const noteLengthLabel =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#note-length-label',
+      );
+    assert(noteLengthLabel !== null);
+
+    const noteLengthSlider =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#note-length-slider',
+      );
+    assert(noteLengthSlider !== null);
+    const handleNoteLengthChange = () => {
+      noteLengthLabel.innerText = `${noteLengthSlider.value}%`;
+      this.relativeNoteLength = noteLengthSlider.valueAsNumber / 100;
+    };
+    handleNoteLengthChange();
+    noteLengthSlider.addEventListener('input', handleNoteLengthChange);
 
     const resetStateCheckBox =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
@@ -251,7 +272,7 @@ export default class SynthGenie {
         const frequency = Tone.Frequency(pitch, 'midi').toFrequency();
         this.synth.triggerAttackRelease(
           frequency,
-          (0.75 * NOTE_DURATION_MS) / 1000,
+          (this.relativeNoteLength * NOTE_DURATION_MS) / 1000,
         );
       }
 
