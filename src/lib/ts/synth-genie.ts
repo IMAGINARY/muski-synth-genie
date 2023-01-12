@@ -94,7 +94,7 @@ export default class SynthGenie {
 
   protected player: SoundFontPlayer;
 
-  protected synth: Tone.AMSynth;
+  protected synth: Tone.PolySynth;
 
   protected beatLength: number;
 
@@ -168,7 +168,7 @@ export default class SynthGenie {
     this.player = new SoundFontPlayer(
       'https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus',
     );
-    this.synth = new Tone.AMSynth().toDestination();
+    this.synth = new Tone.PolySynth(Tone.AMSynth).toDestination();
 
     this.updateGrid();
   }
@@ -268,6 +268,7 @@ export default class SynthGenie {
         this.minMidiNote,
         this.maxMidiNote,
       );
+      this.synth.maxPolyphony = 2 * this.allowedNotes.length;
     };
     handleMinMidiNoteChange();
     minMidiNoteSlider.addEventListener('input', handleMinMidiNoteChange);
@@ -284,6 +285,7 @@ export default class SynthGenie {
         this.minMidiNote,
         this.maxMidiNote,
       );
+      this.synth.maxPolyphony = 2 * this.allowedNotes.length;
     };
     handleMaxMidiNoteChange();
     maxMidiNoteSlider.addEventListener('input', handleMaxMidiNoteChange);
