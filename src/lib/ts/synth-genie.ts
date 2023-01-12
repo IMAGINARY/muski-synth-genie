@@ -1,4 +1,4 @@
-import { tf, PianoGenie, Player, SoundFontPlayer } from '@magenta/music';
+import { tf, PianoGenie } from '@magenta/music';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as Tone from 'tone';
 import { strict as assert } from 'assert';
@@ -94,8 +94,6 @@ export default class SynthGenie {
 
   protected genie: PianoGenie;
 
-  protected player: SoundFontPlayer;
-
   protected synth: Tone.PolySynth;
 
   protected beatLength: number;
@@ -173,9 +171,6 @@ export default class SynthGenie {
     this.pointers = new Map();
 
     this.genie = new PianoGenie(CONSTANTS.GENIE_CHECKPOINT);
-    this.player = new SoundFontPlayer(
-      'https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus',
-    );
     this.synth = new Tone.PolySynth(Tone.AMSynth).toDestination();
 
     this.updateGrid();
@@ -354,10 +349,6 @@ export default class SynthGenie {
   }
 
   async init() {
-    await this.player.loadSamples({
-      notes: keyWhitelist.map((pitch) => ({ pitch })),
-    });
-
     const { genie } = this;
     await genie.initialize();
     console.log('🧞‍♀️ ready!');
