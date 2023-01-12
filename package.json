@@ -79,7 +79,8 @@
     "typescript-plugin-css-modules": "^4.1.1"
   },
   "dependencies": {
-    "@magenta/music": "^1.23.1"
+    "@magenta/music": "^1.23.1",
+    "@swc/helpers": "^0.4.14"
   },
   "scripts": {
     "serve": "parcel serve --dist-dir dist-dev --target app",

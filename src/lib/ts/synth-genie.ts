@@ -4,7 +4,7 @@ import * as Tone from 'tone';
 import { strict as assert } from 'assert';
 
 import classes from '../scss/canvas.module.scss';
-import { getRelativePointerPosition, setPosition } from './util';
+import { getRelativePointerPosition, getCurvePoints } from './util';
 
 tf.disableDeprecationWarnings();
 
@@ -80,6 +80,8 @@ export default class SynthGenie {
 
   protected gridLayer: HTMLCanvasElement;
 
+  protected segmentLayer: HTMLCanvasElement;
+
   protected paintLayer: HTMLCanvasElement;
 
   protected activatedCells: number[];
@@ -135,6 +137,10 @@ export default class SynthGenie {
     gridLayer.width = CANVAS_WIDTH;
     gridLayer.height = CANVAS_HEIGHT;
 
+    const segmentLayer = document.createElement('canvas');
+    segmentLayer.width = CANVAS_WIDTH;
+    segmentLayer.height = CANVAS_HEIGHT;
+
     const paintLayer = document.createElement('canvas');
     paintLayer.width = CANVAS_WIDTH;
     paintLayer.height = CANVAS_HEIGHT;
@@ -142,6 +148,7 @@ export default class SynthGenie {
     const layers = document.createElement('div');
     layers.classList.add(classes.layers);
     layers.appendChild(gridLayer);
+    layers.appendChild(segmentLayer);
     layers.appendChild(paintLayer);
 
     const pane = document.createElement('div');
@@ -160,6 +167,7 @@ export default class SynthGenie {
     this.element = element;
     this.layers = layers;
     this.gridLayer = gridLayer;
+    this.segmentLayer = segmentLayer;
     this.paintLayer = paintLayer;
 
     this.pointers = new Map();
@@ -483,6 +491,70 @@ export default class SynthGenie {
       );
       SynthGenie.paintGrid(gridLayerContext, this.numNotes);
     }
+
+    const segmentLayerContext = this.gridLayer.getContext('2d');
+    assert(segmentLayerContext !== null);
+    SynthGenie.paintSegments(
+      segmentLayerContext,
+      this.activatedCells,
+      this.numNotes,
+    );
+  }
+
+  protected static paintSegments(
+    context: RenderingContext2D,
+    cells: number[],
+    numNotes: number,
+  ) {
+    // compute segments
+    const segments: { x: number; y: number }[][] = new Array<
+      { x: number; y: number }[]
+    >();
+    const stepX = CANVAS_WIDTH / numNotes;
+    const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
+    for (let cellX = 0; cellX < numNotes; cellX += 1) {
+      const prevCellY = cells[cellX - 1] ?? -1;
+      const cellY = cells[cellX];
+
+      if (cellY !== -1) {
+        if (prevCellY === -1) {
+          segments.push([]);
+        }
+        const segment = segments[segments.length - 1];
+        const x = stepX * (0.5 + cellX);
+        const y = stepY * (0.5 + cellY);
+        segment.push({ x, y });
+      }
+    }
+
+    context.save();
+    context.beginPath();
+    context.strokeStyle = 'red';
+    context.lineWidth = 10;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    segments.forEach((segment) => {
+      if (segment.length === 1) {
+        const [{ x, y }] = segment;
+        context.moveTo(x, y);
+        context.lineTo(x, y);
+      } else if (segment.length === 2) {
+        const [{ x: x0, y: y0 }, { x: x1, y: y1 }] = segment;
+        context.moveTo(x0, y0);
+        context.lineTo(x1, y1);
+      } else if (segment.length >= 3) {
+        const points = getCurvePoints(segment, 0.35);
+        const firstPoint = points.shift();
+        assert(typeof firstPoint !== 'undefined');
+
+        context.moveTo(firstPoint.x, firstPoint.y);
+        points.forEach(({ x, y }) => context.lineTo(x, y));
+      }
+    });
+
+    context.stroke();
+    context.closePath();
+    context.restore();
   }
 
   protected static paintGrid(context: RenderingContext2D, numNotes: number) {
