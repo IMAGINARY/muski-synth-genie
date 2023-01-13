@@ -111,6 +111,8 @@ export default class SynthGenie {
 
   protected resetStateOnLoop: boolean;
 
+  protected sustainInSegments: boolean;
+
   protected showGrid: boolean;
 
   protected showBar: boolean;
@@ -135,6 +137,7 @@ export default class SynthGenie {
     this.position = 0;
     this.loopCount = 0;
     this.resetStateOnLoop = true;
+    this.sustainInSegments = true;
     this.showGrid = true;
     this.showBar = true;
     this.beatLength = 250;
@@ -339,6 +342,20 @@ export default class SynthGenie {
     handleBarVisibleChange();
     barVisibleCheckBox.addEventListener('input', handleBarVisibleChange);
 
+    const sustainInSegmentsCheckBox =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#sustain-in-segments-checkbox',
+      );
+    assert(sustainInSegmentsCheckBox !== null);
+    const handleSustainInSegmentsChange = () => {
+      this.sustainInSegments = sustainInSegmentsCheckBox.checked;
+    };
+    handleSustainInSegmentsChange();
+    sustainInSegmentsCheckBox.addEventListener(
+      'input',
+      handleSustainInSegmentsChange,
+    );
+
     const clearButton =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
         '#clear-button',
@@ -425,8 +442,10 @@ export default class SynthGenie {
       if (cell !== -1) {
         const frequency = getGenieFrequency(cell);
 
-        const attack = synth === null || indexInSegment === 0;
-        const release = indexInSegment === segment.length - 1;
+        const attack =
+          synth === null || indexInSegment === 0 || !this.sustainInSegments;
+        const release =
+          indexInSegment === segment.length - 1 || !this.sustainInSegments;
 
         synth = synth ?? synthPool.pop() ?? createSynth();
 
@@ -435,7 +454,9 @@ export default class SynthGenie {
           synth.triggerAttack(frequency);
         } else {
           // ramp to next note frequency
-          synth.frequency.exponentialRampTo(frequency, 50 / 1000);
+          synth.triggerAttack(frequency);
+          //          synth.frequency.value = frequency;
+          //          synth.frequency.exponentialRampTo(frequency, 50 / 1000);
         }
         if (release) {
           // release note at the end of this cell
