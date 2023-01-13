@@ -111,6 +111,14 @@ export default class SynthGenie {
 
   protected showBar: boolean;
 
+  protected dotColor: string;
+
+  protected relativeDotSize: number;
+
+  protected lineColor: string;
+
+  protected relativeLineWidth: number;
+
   protected constructor(
     element: Element,
     options: Partial<SynthGenieOptions> = {},
@@ -128,6 +136,10 @@ export default class SynthGenie {
     this.relativeNoteLength = 1.0;
     this.minMidiNote = 21;
     this.maxMidiNote = 21 + 12 * 7;
+    this.dotColor = '#2c2c2c';
+    this.relativeDotSize = 0.0;
+    this.lineColor = '#2c2c2c';
+    this.relativeLineWidth = 0.6;
     this.allowedNotes = computeAllowedNotes(this.maxMidiNote, this.maxMidiNote);
 
     const gridLayer = document.createElement('canvas');
@@ -521,13 +533,25 @@ export default class SynthGenie {
 
     const segmentLayerContext = this.gridLayer.getContext('2d');
     assert(segmentLayerContext !== null);
-    SynthGenie.paintSegments(segmentLayerContext, this.segments, this.numNotes);
+    SynthGenie.paintSegments(
+      segmentLayerContext,
+      this.segments,
+      this.numNotes,
+      this.dotColor,
+      this.relativeDotSize,
+      this.lineColor,
+      this.relativeLineWidth,
+    );
   }
 
   protected static paintSegments(
     context: RenderingContext2D,
     segments: Segments<number>,
     numNotes: number,
+    dotColor: string,
+    relativeDotSize: number,
+    lineColor: string,
+    relativeLineWidth: number,
   ) {
     // compute segments
     const controlPointsPerSegment: { x: number; y: number }[][] = [];
@@ -550,41 +574,60 @@ export default class SynthGenie {
       controlPointsPerSegment.push(controlPoints);
     }
 
+    const minCellDim = Math.min(
+      CANVAS_HEIGHT / NUM_BUTTONS,
+      CANVAS_WIDTH / numNotes,
+    );
+
     context.save();
-    context.beginPath();
-    context.strokeStyle = 'red';
-    context.lineWidth =
-      Math.min(CANVAS_HEIGHT / NUM_BUTTONS, CANVAS_WIDTH / numNotes) * 0.6;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    controlPointsPerSegment.forEach((controlPoints) => {
-      if (controlPoints.length === 1) {
-        const [{ x, y }] = controlPoints;
-        context.moveTo(x, y);
-        context.lineTo(x, y);
-      } else if (controlPoints.length === 2) {
-        const [{ x: x0, y: y0 }, { x: x1, y: y1 }] = controlPoints;
-        context.moveTo(x0, y0);
-        context.lineTo(x1, y1);
-      } else if (controlPoints.length >= 3) {
-        const points = getCurvePoints(controlPoints, 0.35);
-        const firstPoint = points.shift();
-        assert(typeof firstPoint !== 'undefined');
+    const dotRadius = minCellDim * relativeDotSize * 0.5;
+    if (dotRadius > 0) {
+      context.fillStyle = dotColor;
+      controlPointsPerSegment.forEach((controlPoints) =>
+        controlPoints.forEach(({ x, y }) => {
+          context.beginPath();
+          context.ellipse(x, y, dotRadius, dotRadius, 0, 0, 2 * Math.PI);
+          context.closePath();
+          context.fill();
+        }),
+      );
+    }
 
-        context.moveTo(firstPoint.x, firstPoint.y);
-        points.forEach(({ x, y }) => context.lineTo(x, y));
-      }
-    });
+    const lineWidth = minCellDim * relativeLineWidth;
+    if (lineWidth > 0) {
+      context.beginPath();
+      context.strokeStyle = lineColor;
+      context.lineWidth = lineWidth;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      controlPointsPerSegment.forEach((controlPoints) => {
+        if (controlPoints.length === 1) {
+          const [{ x, y }] = controlPoints;
+          context.moveTo(x, y);
+          context.lineTo(x, y);
+        } else if (controlPoints.length === 2) {
+          const [{ x: x0, y: y0 }, { x: x1, y: y1 }] = controlPoints;
+          context.moveTo(x0, y0);
+          context.lineTo(x1, y1);
+        } else if (controlPoints.length >= 3) {
+          const points = getCurvePoints(controlPoints, 0.35);
+          const firstPoint = points.shift();
+          assert(typeof firstPoint !== 'undefined');
 
-    context.stroke();
-    context.closePath();
+          context.moveTo(firstPoint.x, firstPoint.y);
+          points.forEach(({ x, y }) => context.lineTo(x, y));
+        }
+      });
+      context.stroke();
+      context.closePath();
+    }
     context.restore();
   }
 
   protected static paintGrid(context: RenderingContext2D, numNotes: number) {
     context.save();
     context.beginPath();
-    context.strokeStyle = 'lightblue';
+    context.strokeStyle = '#b3b2b2';
     const stepX = CANVAS_WIDTH / numNotes;
     for (let i = 1; i < numNotes; i += 1) {
       const x = stepX * i;
@@ -609,7 +652,7 @@ export default class SynthGenie {
   ) {
     context.save();
     context.beginPath();
-    context.fillStyle = '#6fbbd3';
+    context.fillStyle = '#b3b2b2';
     const stepX = CANVAS_WIDTH / numNotes;
     const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
     let cellX = 0;
@@ -637,7 +680,7 @@ export default class SynthGenie {
     numNotes: number,
   ) {
     context.save();
-    context.fillStyle = '#add8e6';
+    context.fillStyle = 'rgba(211,211,211,0.4)';
     const stepX = CANVAS_WIDTH / numNotes;
     const x = stepX * pos;
     context.fillRect(x, 0, stepX, CANVAS_WIDTH);
