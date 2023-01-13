@@ -5,6 +5,9 @@ import { strict as assert } from 'assert';
 
 import classes from '../scss/canvas.module.scss';
 import { getRelativePointerPosition, getCurvePoints } from './util';
+import Segments from './segments';
+
+window.Segments = Segments;
 
 tf.disableDeprecationWarnings();
 
@@ -74,7 +77,7 @@ export default class SynthGenie {
 
   protected pane: HTMLDivElement;
 
-  protected pointers: Map<number, { x: number; y: number }>;
+  protected pointers: Map<number, { x: number; y: number; cellX: number }>;
 
   protected layers: HTMLDivElement;
 
@@ -82,9 +85,7 @@ export default class SynthGenie {
 
   protected segmentLayer: HTMLCanvasElement;
 
-  protected paintLayer: HTMLCanvasElement;
-
-  protected activatedCells: number[];
+  protected segments: Segments<number>;
 
   protected numNotes: number;
 
@@ -119,7 +120,7 @@ export default class SynthGenie {
     this._options = { ...defaultOptions, ...options };
 
     this.numNotes = NUM_NOTES;
-    this.activatedCells = new Array<number>(this.numNotes).fill(-1);
+    this.segments = new Segments(this.numNotes, () => -1);
     this.position = 0;
     this.loopCount = 0;
     this.resetStateOnLoop = true;
@@ -139,15 +140,10 @@ export default class SynthGenie {
     segmentLayer.width = CANVAS_WIDTH;
     segmentLayer.height = CANVAS_HEIGHT;
 
-    const paintLayer = document.createElement('canvas');
-    paintLayer.width = CANVAS_WIDTH;
-    paintLayer.height = CANVAS_HEIGHT;
-
     const layers = document.createElement('div');
     layers.classList.add(classes.layers);
     layers.appendChild(gridLayer);
     layers.appendChild(segmentLayer);
-    layers.appendChild(paintLayer);
 
     const pane = document.createElement('div');
     pane.setAttribute('touch-action', 'none'); // for Pointer Events Polyfill
@@ -166,7 +162,6 @@ export default class SynthGenie {
     this.layers = layers;
     this.gridLayer = gridLayer;
     this.segmentLayer = segmentLayer;
-    this.paintLayer = paintLayer;
 
     this.pointers = new Map();
 
@@ -192,10 +187,8 @@ export default class SynthGenie {
     numNotesSlider.addEventListener('input', () => {
       numNotesLabel.innerText = numNotesSlider.value;
       this.numNotes = numNotesSlider.valueAsNumber;
-      this.activatedCells.length = this.numNotes;
-      this.activatedCells.fill(-1);
+      this.segments.resize(this.numNotes);
       this.position = 0;
-      this.clearPaintLayer();
       this.updateGrid();
       this.genie.resetState();
     });
@@ -329,10 +322,8 @@ export default class SynthGenie {
     assert(clearButton !== null);
     clearButton.addEventListener('click', () => {
       this.numNotes = numNotesSlider.valueAsNumber;
-      this.activatedCells.length = this.numNotes;
-      this.activatedCells.fill(-1);
+      this.segments.set(0, ...Array<number>(this.segments.size).fill(-1));
       this.position = 0;
-      this.clearPaintLayer();
       this.updateGrid();
       this.genie.resetState();
     });
@@ -354,7 +345,7 @@ export default class SynthGenie {
     console.log('🧞‍♀️ ready!');
 
     const nextNote = () => {
-      const cell = this.activatedCells[this.position];
+      const cell = this.segments.get(this.position, -1);
       if (cell !== -1) {
         // we want low cell numbers (vertically at the top) to correspond
         // with high pitches. Therefore, "invert" the cell id.
@@ -375,7 +366,7 @@ export default class SynthGenie {
       this.updateGrid();
 
       this.position += 1;
-      if (this.position === this.activatedCells.length) {
+      if (this.position === this.segments.size) {
         this.position = 0;
         this.loopCount += 1;
         if (this.resetStateOnLoop) genie.resetState();
@@ -402,15 +393,25 @@ export default class SynthGenie {
     };
   }
 
+  getCellCoordinates(relX: number, relY: number) {
+    const cellX = Math.floor(relX * this.numNotes);
+    const cellY = Math.floor(relY * NUM_BUTTONS);
+    return { cellX, cellY };
+  }
+
   protected addPointer(pe: PointerEvent) {
     this.removePointer(pe);
     this.pane.addEventListener('pointermove', this.handlers.updatePointer);
 
     this.pane.setPointerCapture(pe.pointerId);
 
-    const { x, y } = getRelativePointerPosition(pe, this.pane);
+    const { x, y, relX, relY } = getRelativePointerPosition(pe, this.pane);
 
-    this.pointers.set(pe.pointerId, { x, y });
+    const { cellX } = this.getCellCoordinates(relX, relY);
+    this.segments.split(cellX);
+    this.segments.split(cellX + 1);
+
+    this.pointers.set(pe.pointerId, { x, y, cellX });
 
     this.updatePointer(pe);
   }
@@ -420,34 +421,26 @@ export default class SynthGenie {
 
     const id = pe.pointerId;
     const { x, y, relX, relY } = getRelativePointerPosition(pe, this.pane);
-    const pos = this.pointers.get(id);
-    assert(typeof pos !== 'undefined');
-    const { x: prevX, y: prevY } = pos;
-
-    const context = this.paintLayer.getContext('2d');
-    assert(context !== null);
-    context.save();
-    context.beginPath();
-    context.clearRect(
-      Math.min(prevX, x),
-      0,
-      Math.abs(prevX - x),
-      CANVAS_HEIGHT,
-    );
-    context.moveTo(prevX, prevY);
-    context.lineTo(x, y);
-    context.stroke();
-    context.closePath();
-    context.restore();
-
-    this.pointers.set(id, { x, y });
+    const pointerData = this.pointers.get(id);
+    assert(typeof pointerData !== 'undefined');
+    const { x: prevX, y: prevY } = pointerData;
 
     const { numNotes } = this;
-    const cellX = Math.floor(relX * numNotes);
-    const cellY = Math.floor(relY * NUM_BUTTONS);
+    const { cellX, cellY } = this.getCellCoordinates(relX, relY);
+    this.pointers.set(id, { x, y, cellX });
     if (cellX >= 0 && cellX < this.numNotes) {
-      this.activatedCells[cellX] =
-        cellY >= 0 && cellY < NUM_BUTTONS ? cellY : -1;
+      // TODO: all cell on the connecting line should be activated, e.g. when pointer is moved quickly
+      this.segments.set(cellX, cellY >= 0 && cellY < NUM_BUTTONS ? cellY : -1);
+      const { cellX: prevCellX } = pointerData;
+      if (prevCellX !== cellX) {
+        const { segmentIndex: prevSegmentIndex } =
+          this.segments.findSegmentIndex(prevCellX);
+        const { segmentIndex } = this.segments.findSegmentIndex(cellX);
+        if (prevSegmentIndex !== segmentIndex) {
+          this.segments.isolate(cellX);
+          this.segments.join(prevCellX < cellX ? cellX : prevCellX);
+        }
+      }
       this.updateGrid();
     }
   }
@@ -461,12 +454,6 @@ export default class SynthGenie {
       this.pane.removeEventListener('pointermove', this.handlers.updatePointer);
   }
 
-  protected clearPaintLayer() {
-    const paintLayerContext = this.paintLayer.getContext('2d');
-    assert(paintLayerContext !== null);
-    paintLayerContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-  }
-
   protected updateGrid() {
     const gridLayerContext = this.gridLayer.getContext('2d');
     assert(gridLayerContext !== null);
@@ -475,47 +462,39 @@ export default class SynthGenie {
       SynthGenie.paintBar(gridLayerContext, this.position, this.numNotes);
     }
     if (this.showGrid) {
-      SynthGenie.paintCells(
-        gridLayerContext,
-        this.activatedCells,
-        this.numNotes,
-      );
+      SynthGenie.paintCells(gridLayerContext, this.segments, this.numNotes);
       SynthGenie.paintGrid(gridLayerContext, this.numNotes);
     }
 
     const segmentLayerContext = this.gridLayer.getContext('2d');
     assert(segmentLayerContext !== null);
-    SynthGenie.paintSegments(
-      segmentLayerContext,
-      this.activatedCells,
-      this.numNotes,
-    );
+    SynthGenie.paintSegments(segmentLayerContext, this.segments, this.numNotes);
   }
 
   protected static paintSegments(
     context: RenderingContext2D,
-    cells: number[],
+    segments: Segments<number>,
     numNotes: number,
   ) {
     // compute segments
-    const segments: { x: number; y: number }[][] = new Array<
-      { x: number; y: number }[]
-    >();
+    const controlPointsPerSegment: { x: number; y: number }[][] = [];
     const stepX = CANVAS_WIDTH / numNotes;
     const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
-    for (let cellX = 0; cellX < numNotes; cellX += 1) {
-      const prevCellY = cells[cellX - 1] ?? -1;
-      const cellY = cells[cellX];
-
-      if (cellY !== -1) {
-        if (prevCellY === -1) {
-          segments.push([]);
+    let cellX = 0;
+    for (let i = 0; i < segments.numSegments; i += 1) {
+      const segment = segments.getSegment(i);
+      const controlPoints: { x: number; y: number }[] = [];
+      assert(typeof segment !== 'undefined');
+      for (let j = 0; j < segment.length; j += 1) {
+        const cellY = segment[j];
+        if (cellY >= 0) {
+          const x = stepX * (0.5 + cellX);
+          const y = stepY * (0.5 + cellY);
+          controlPoints.push({ x, y });
         }
-        const segment = segments[segments.length - 1];
-        const x = stepX * (0.5 + cellX);
-        const y = stepY * (0.5 + cellY);
-        segment.push({ x, y });
+        cellX += 1;
       }
+      controlPointsPerSegment.push(controlPoints);
     }
 
     context.save();
@@ -524,17 +503,17 @@ export default class SynthGenie {
     context.lineWidth = 10;
     context.lineCap = 'round';
     context.lineJoin = 'round';
-    segments.forEach((segment) => {
-      if (segment.length === 1) {
-        const [{ x, y }] = segment;
+    controlPointsPerSegment.forEach((controlPoints) => {
+      if (controlPoints.length === 1) {
+        const [{ x, y }] = controlPoints;
         context.moveTo(x, y);
         context.lineTo(x, y);
-      } else if (segment.length === 2) {
-        const [{ x: x0, y: y0 }, { x: x1, y: y1 }] = segment;
+      } else if (controlPoints.length === 2) {
+        const [{ x: x0, y: y0 }, { x: x1, y: y1 }] = controlPoints;
         context.moveTo(x0, y0);
         context.lineTo(x1, y1);
-      } else if (segment.length >= 3) {
-        const points = getCurvePoints(segment, 0.35);
+      } else if (controlPoints.length >= 3) {
+        const points = getCurvePoints(controlPoints, 0.35);
         const firstPoint = points.shift();
         assert(typeof firstPoint !== 'undefined');
 
@@ -571,7 +550,7 @@ export default class SynthGenie {
 
   protected static paintCells(
     context: RenderingContext2D,
-    cells: number[],
+    segments: Segments<number>,
     numNotes: number,
   ) {
     context.save();
@@ -579,11 +558,18 @@ export default class SynthGenie {
     context.fillStyle = '#6fbbd3';
     const stepX = CANVAS_WIDTH / numNotes;
     const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
-    for (let i = 0; i < cells.length; i += 1) {
-      if (cells[i] >= 0) {
-        const x = stepX * i;
-        const y = stepY * cells[i];
-        context.rect(x, y, stepX, stepY);
+    let cellX = 0;
+    for (let i = 0; i < segments.numSegments; i += 1) {
+      const segment = segments.getSegment(i);
+      assert(typeof segment !== 'undefined');
+      for (let j = 0; j < segment.length; j += 1) {
+        const cellY = segment[j];
+        if (cellY >= 0) {
+          const x = stepX * cellX;
+          const y = stepY * cellY;
+          context.rect(x, y, stepX, stepY);
+        }
+        cellX += 1;
       }
     }
     context.fill();
