@@ -95,8 +95,6 @@ export default class SynthGenie {
 
   protected genie: PianoGenie;
 
-  protected synth: Tone.PolySynth;
-
   protected beatLength: number;
 
   protected relativeNoteLength: number;
@@ -166,7 +164,6 @@ export default class SynthGenie {
     this.pointers = new Map();
 
     this.genie = new PianoGenie(CONSTANTS.GENIE_CHECKPOINT);
-    this.synth = new Tone.PolySynth(Tone.AMSynth).toDestination();
 
     this.updateGrid();
   }
@@ -264,7 +261,6 @@ export default class SynthGenie {
         this.minMidiNote,
         this.maxMidiNote,
       );
-      this.synth.maxPolyphony = 2 * this.allowedNotes.length;
     };
     handleMinMidiNoteChange();
     minMidiNoteSlider.addEventListener('input', handleMinMidiNoteChange);
@@ -281,7 +277,6 @@ export default class SynthGenie {
         this.minMidiNote,
         this.maxMidiNote,
       );
-      this.synth.maxPolyphony = 2 * this.allowedNotes.length;
     };
     handleMaxMidiNoteChange();
     maxMidiNoteSlider.addEventListener('input', handleMaxMidiNoteChange);
@@ -344,23 +339,82 @@ export default class SynthGenie {
     await genie.initialize();
     console.log('🧞‍♀️ ready!');
 
+    const getGenieFrequency = (cell: number) => {
+      const genieButton = NUM_BUTTONS - 1 - cell;
+      const pitch = genie.nextFromKeyList(
+        genieButton,
+        this.allowedNotes,
+        TEMPERATURE,
+      );
+      //        this.player.playNoteDown({ pitch });
+      const frequency = Tone.Frequency(pitch, 'midi').toFrequency();
+      return frequency;
+    };
+
+    const envelopeOptions = {
+      attack: 0.01,
+      attackCurve: 'exponential',
+      decay: 0.01,
+      decayCurve: 'exponential',
+      release: 0.5,
+      releaseCurve: 'exponential',
+      sustain: 0.9,
+    };
+    const synthOptions = { envelope: envelopeOptions };
+
+    console.log(new Tone.AMSynth(synthOptions).toDestination());
+
+    let numSynth = 1;
+    const createSynth = () => {
+      numSynth += 1;
+      console.log(`Synth pool size: ${synthPool.length} (created:${numSynth})`);
+      return new Tone.AMSynth(synthOptions).toDestination();
+    };
+
+    const synthPool: Tone.AMSynth[] = [];
+    const releaseAndFreeSynth = (synth: Tone.AMSynth, seconds: number) => {
+      synth.triggerRelease(Tone.now() + seconds);
+      const releaseDuration = Tone.Time(synth.envelope.release).toSeconds();
+      const toneDuration = seconds + releaseDuration;
+      setTimeout(() => synthPool.push(synth), toneDuration * 1000);
+    };
+
+    let synth: Tone.AMSynth | null = null;
     const nextNote = () => {
-      const cell = this.segments.get(this.position, -1);
+      const { segment, indexInSegment } = this.segments.getSegmentOf(
+        this.position,
+      );
+      const cell = segment[indexInSegment];
+      assert(typeof cell !== 'undefined');
+
+      if (synth !== null && cell === -1) {
+        // note still ringing, but shouldn't (grid values changed)
+        releaseAndFreeSynth(synth, 0);
+        synth = null;
+      }
+
       if (cell !== -1) {
-        // we want low cell numbers (vertically at the top) to correspond
-        // with high pitches. Therefore, "invert" the cell id.
-        const genieButton = NUM_BUTTONS - 1 - cell;
-        const pitch = genie.nextFromKeyList(
-          genieButton,
-          this.allowedNotes,
-          TEMPERATURE,
-        );
-        //        this.player.playNoteDown({ pitch });
-        const frequency = Tone.Frequency(pitch, 'midi').toFrequency();
-        this.synth.triggerAttackRelease(
-          frequency,
-          (this.relativeNoteLength * NOTE_DURATION_MS) / 1000,
-        );
+        const frequency = getGenieFrequency(cell);
+
+        const attack = synth === null || indexInSegment === 0;
+        const release = indexInSegment === segment.length - 1;
+
+        synth = synth ?? synthPool.pop() ?? createSynth();
+
+        if (attack) {
+          // attack
+          synth.triggerAttack(frequency);
+        } else {
+          // ramp to next note frequency
+          synth.frequency.exponentialRampTo(frequency, 50 / 1000);
+        }
+        if (release) {
+          // release note at the end of this cell
+          const noteDuration =
+            (this.beatLength * this.relativeNoteLength) / 1000;
+          releaseAndFreeSynth(synth, noteDuration);
+          synth = null;
+        }
       }
 
       this.updateGrid();
@@ -370,7 +424,6 @@ export default class SynthGenie {
         this.position = 0;
         this.loopCount += 1;
         if (this.resetStateOnLoop) genie.resetState();
-        console.log('loop');
       }
       setTimeout(nextNote, this.beatLength);
     };
