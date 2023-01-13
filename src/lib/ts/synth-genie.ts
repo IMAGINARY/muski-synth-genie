@@ -193,14 +193,16 @@ export default class SynthGenie {
       );
     assert(numNotesSlider !== null);
     numNotesLabel.innerText = numNotesSlider.value;
-    numNotesSlider.addEventListener('input', () => {
+    const handleNumNotesChange = () => {
       numNotesLabel.innerText = numNotesSlider.value;
       this.numNotes = numNotesSlider.valueAsNumber;
       this.segments.resize(this.numNotes);
       this.position = 0;
       this.updateGrid();
       this.genie.resetState();
-    });
+    };
+    handleNumNotesChange();
+    numNotesSlider.addEventListener('input', handleNumNotesChange);
 
     const beatLengthLabel =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
@@ -298,29 +300,35 @@ export default class SynthGenie {
         '#reset-state-checkbox',
       );
     assert(resetStateCheckBox !== null);
-    resetStateCheckBox.addEventListener('input', () => {
+    const handleResetStateChange = () => {
       this.resetStateOnLoop = resetStateCheckBox.checked;
-    });
+    };
+    handleResetStateChange();
+    resetStateCheckBox.addEventListener('input', handleResetStateChange);
 
     const gridActiveCheckBox =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
         '#grid-active-checkbox',
       );
     assert(gridActiveCheckBox !== null);
-    gridActiveCheckBox.addEventListener('input', () => {
+    const handleGridActiveChange = () => {
       this.showGrid = gridActiveCheckBox.checked;
       this.updateGrid();
-    });
+    };
+    handleGridActiveChange();
+    gridActiveCheckBox.addEventListener('input', handleGridActiveChange);
 
     const barVisibleCheckBox =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
         '#bar-visible-checkbox',
       );
     assert(barVisibleCheckBox !== null);
-    barVisibleCheckBox.addEventListener('input', () => {
+    const handleBarVisibleChange = () => {
       this.showBar = barVisibleCheckBox.checked;
       this.updateGrid();
-    });
+    };
+    handleBarVisibleChange();
+    barVisibleCheckBox.addEventListener('input', handleBarVisibleChange);
 
     const clearButton =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
