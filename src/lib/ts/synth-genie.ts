@@ -99,6 +99,8 @@ export default class SynthGenie {
 
   protected genie: PianoGenie;
 
+  protected gain: Tone.Gain;
+
   protected beatLength: number;
 
   protected relativeNoteLength: number;
@@ -188,6 +190,7 @@ export default class SynthGenie {
     this.pointers = new Map();
 
     this.genie = new PianoGenie(CONSTANTS.GENIE_CHECKPOINT);
+    this.gain = new Tone.Gain(1).toDestination();
 
     this.updateGrid();
   }
@@ -356,6 +359,18 @@ export default class SynthGenie {
       handleSustainInSegmentsChange,
     );
 
+    const muteCheckBox =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#mute-checkbox',
+      );
+    assert(muteCheckBox !== null);
+    const handleMuteChange = () => {
+      const mute = muteCheckBox.checked;
+      this.gain.gain.linearRampTo(mute ? 0 : 1, 0.1);
+    };
+    handleMuteChange();
+    muteCheckBox.addEventListener('input', handleMuteChange);
+
     const clearButton =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
         '#clear-button',
@@ -414,7 +429,7 @@ export default class SynthGenie {
     const createSynth = () => {
       numSynth += 1;
       console.log(`Synth pool size: ${synthPool.length} (created:${numSynth})`);
-      return new Tone.AMSynth(synthOptions).toDestination();
+      return new Tone.AMSynth(synthOptions).connect(this.gain);
     };
 
     const synthPool: Tone.AMSynth[] = [];
