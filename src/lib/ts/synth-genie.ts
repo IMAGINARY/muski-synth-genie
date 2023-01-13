@@ -26,7 +26,8 @@ const CONSTANTS = {
   NOTES_PER_OCTAVE: 12,
   WHITE_NOTES_PER_OCTAVE: 7,
   LOWEST_PIANO_KEY_MIDI_NOTE: 21,
-  GENIE_CHECKPOINT: 'https://imaginary.github.io/piano-genie/model/genie',
+  GENIE_CHECKPOINT:
+    'https://storage.googleapis.com/magentadata/js/checkpoints/piano_genie/model/epiano/stp_iq_auto_contour_dt_166006',
 };
 
 const NUM_NOTES = 16;
@@ -41,18 +42,21 @@ const SCALE = CHROMATIC;
 const ROOT_NOTE = CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE;
 const OCTAVES = 7;
 const totalNotes = CONSTANTS.NOTES_PER_OCTAVE * OCTAVES;
-const keyWhitelist: number[] = [];
-for (let octave = 0; octave < OCTAVES; octave += 1) {
-  const offset = ROOT_NOTE + octave * 12;
-  const degreesInOctave = SCALE.map((degree) => offset + degree);
-  keyWhitelist.push(...degreesInOctave);
-}
-console.log(keyWhitelist);
 
-function computeAllowedNotes(minMidiNote: number, maxMidiNote: number) {
-  const numNotes = Math.max(0, maxMidiNote - minMidiNote);
-  const notes = new Array(numNotes).fill(0).map((_, i) => minMidiNote + i);
-  return notes;
+function computeAllowedPianoKeys(minMidiNote: number, maxMidiNote: number) {
+  assert(minMidiNote < maxMidiNote);
+  const keyMin = Math.max(
+    0,
+    minMidiNote - CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE,
+  );
+  const maxKey = Math.min(
+    maxMidiNote - CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE,
+    88 - 1,
+  );
+  const numKeys = Math.max(0, maxKey - keyMin + 1);
+  const keys = new Array(numKeys).fill(0).map((_, i) => keyMin + i);
+  console.log(keys);
+  return keys;
 }
 
 const TEMPERATURE = 0.25;
@@ -103,7 +107,7 @@ export default class SynthGenie {
 
   protected maxMidiNote: number;
 
-  protected allowedNotes: number[];
+  protected allowedPianoKeys: number[];
 
   protected resetStateOnLoop: boolean;
 
@@ -123,6 +127,7 @@ export default class SynthGenie {
     element: Element,
     options: Partial<SynthGenieOptions> = {},
   ) {
+    console.log('Starting');
     this._options = { ...defaultOptions, ...options };
 
     this.numNotes = NUM_NOTES;
@@ -135,12 +140,16 @@ export default class SynthGenie {
     this.beatLength = 250;
     this.relativeNoteLength = 1.0;
     this.minMidiNote = 21;
-    this.maxMidiNote = 21 + 12 * 7;
+    this.maxMidiNote = 21 + 88 - 1;
     this.dotColor = '#2c2c2c';
     this.relativeDotSize = 0.0;
     this.lineColor = '#2c2c2c';
     this.relativeLineWidth = 0.6;
-    this.allowedNotes = computeAllowedNotes(this.maxMidiNote, this.maxMidiNote);
+    this.allowedPianoKeys = computeAllowedPianoKeys(
+      this.minMidiNote,
+      this.maxMidiNote,
+    );
+    console.log('Starting 2');
 
     const gridLayer = document.createElement('canvas');
     gridLayer.width = CANVAS_WIDTH;
@@ -271,7 +280,7 @@ export default class SynthGenie {
         maxMidiNoteSlider.valueAsNumber = midiNote + 2;
         handleMaxMidiNoteChange();
       }
-      this.allowedNotes = computeAllowedNotes(
+      this.allowedPianoKeys = computeAllowedPianoKeys(
         this.minMidiNote,
         this.maxMidiNote,
       );
@@ -287,7 +296,7 @@ export default class SynthGenie {
         minMidiNoteSlider.valueAsNumber = midiNote - 2;
         handleMinMidiNoteChange();
       }
-      this.allowedNotes = computeAllowedNotes(
+      this.allowedPianoKeys = computeAllowedPianoKeys(
         this.minMidiNote,
         this.maxMidiNote,
       );
@@ -361,13 +370,13 @@ export default class SynthGenie {
 
     const getGenieFrequency = (cell: number) => {
       const genieButton = NUM_BUTTONS - 1 - cell;
-      const pitch = genie.nextFromKeyList(
+      const pianoKey = genie.nextFromKeyList(
         genieButton,
-        this.allowedNotes,
+        this.allowedPianoKeys,
         TEMPERATURE,
       );
-      //        this.player.playNoteDown({ pitch });
-      const frequency = Tone.Frequency(pitch, 'midi').toFrequency();
+      const midiNote = CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
+      const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
       return frequency;
     };
 
