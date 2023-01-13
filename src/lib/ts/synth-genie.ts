@@ -553,7 +553,8 @@ export default class SynthGenie {
     context.save();
     context.beginPath();
     context.strokeStyle = 'red';
-    context.lineWidth = 10;
+    context.lineWidth =
+      Math.min(CANVAS_HEIGHT / NUM_BUTTONS, CANVAS_WIDTH / numNotes) * 0.6;
     context.lineCap = 'round';
     context.lineJoin = 'round';
     controlPointsPerSegment.forEach((controlPoints) => {
