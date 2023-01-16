@@ -92,7 +92,7 @@ declare class SynthGenie {
     protected relativeDotSize: number;
     protected lineColor: string;
     protected relativeLineWidth: number;
-    protected synthOptions: Partial<Tone.AMSynthOptions>;
+    protected synthOptions: ConstructorParameters<typeof Tone.AMSynth>[0];
     protected synthPool: Tone.AMSynth[];
     protected synth: Tone.AMSynth | null;
     protected timer: ReturnType<typeof setInterval> | 0;

@@ -345,6 +345,50 @@ var $df410cf7d5f8b9de$var$PIANO_GENIE_CHECKPOINT = "https://storage.googleapis.c
 var $df410cf7d5f8b9de$var$LOWEST_PIANO_KEY_MIDI_NOTE = 21;
 var $df410cf7d5f8b9de$var$NUM_BEATS = 16;
 var $df410cf7d5f8b9de$var$NUM_BUTTONS = 8;
+var $df410cf7d5f8b9de$var$exponentialEnvelopeCurve = "exponential";
+var $df410cf7d5f8b9de$var$envelopeOptions = {
+    attack: 0.01,
+    attackCurve: $df410cf7d5f8b9de$var$exponentialEnvelopeCurve,
+    decay: 0.01,
+    decayCurve: $df410cf7d5f8b9de$var$exponentialEnvelopeCurve,
+    release: 0.5,
+    releaseCurve: $df410cf7d5f8b9de$var$exponentialEnvelopeCurve,
+    sustain: 0.9
+};
+var $df410cf7d5f8b9de$var$SYNTH_OPTIONS = {
+    volume: 0,
+    detune: 0,
+    portamento: 0,
+    harmonicity: 2.5,
+    oscillator: {
+        phase: 0,
+        type: "fatsawtooth",
+        count: 3,
+        spread: 20
+    },
+    envelope: {
+        attack: 0.1,
+        attackCurve: "linear",
+        decay: 0.2,
+        decayCurve: "exponential",
+        release: 0.3,
+        releaseCurve: "exponential",
+        sustain: 0.2
+    },
+    modulation: {
+        phase: 0,
+        type: "square"
+    },
+    modulationEnvelope: {
+        attack: 0.5,
+        attackCurve: "linear",
+        decay: 0.01,
+        decayCurve: "exponential",
+        release: 0.5,
+        releaseCurve: "exponential",
+        sustain: 1
+    }
+};
 function $df410cf7d5f8b9de$var$computeAllowedPianoKeys(minMidiNote, maxMidiNote) {
     (0, $49SJR$assert.strict)(minMidiNote < maxMidiNote);
     var keyMin = Math.max(0, minMidiNote - $df410cf7d5f8b9de$var$LOWEST_PIANO_KEY_MIDI_NOTE);
@@ -443,19 +487,7 @@ var $df410cf7d5f8b9de$export$2e2bcd8739ae039 = /*#__PURE__*/ function() {
         this.pointers = new Map();
         this.genie = new (0, $49SJR$magentamusic.PianoGenie)($df410cf7d5f8b9de$var$PIANO_GENIE_CHECKPOINT);
         this.gain = new $49SJR$tone.Gain(1).toDestination();
-        var exponentialEnvelopeCurve = "exponential";
-        var envelopeOptions = {
-            attack: 0.01,
-            attackCurve: exponentialEnvelopeCurve,
-            decay: 0.01,
-            decayCurve: exponentialEnvelopeCurve,
-            release: 0.5,
-            releaseCurve: exponentialEnvelopeCurve,
-            sustain: 0.9
-        };
-        this.synthOptions = {
-            envelope: envelopeOptions
-        };
+        this.synthOptions = $df410cf7d5f8b9de$var$SYNTH_OPTIONS;
         this.synthPool = [];
         this.synth = null;
         this.timer = 0;
