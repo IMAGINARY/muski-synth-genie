@@ -1,10 +1,11 @@
 import { strict as assert } from 'assert';
-import SynthGenie from '../../lib/ts/synth-genie';
+
+import SynthGenieWithControls from './synth-genie-with-controls';
 
 async function main() {
   const outer = document.getElementById('synth-genie');
   assert(outer !== null);
-  await SynthGenie.create(outer);
+  await SynthGenieWithControls.create(outer);
 }
 
 main().catch(() => {});
