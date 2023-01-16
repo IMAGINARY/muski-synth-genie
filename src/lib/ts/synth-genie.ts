@@ -56,11 +56,9 @@ export default class SynthGenie {
 
   protected pointers: Map<number, CellData>;
 
-  protected layers: HTMLDivElement;
+  protected canvas: HTMLCanvasElement;
 
-  protected gridLayer: HTMLCanvasElement;
-
-  protected segmentLayer: HTMLCanvasElement;
+  protected context: RenderingContext2D;
 
   protected segments: Segments<number>;
 
@@ -129,18 +127,11 @@ export default class SynthGenie {
     );
     console.log('Starting 2');
 
-    const gridLayer = document.createElement('canvas');
-    gridLayer.width = CANVAS_WIDTH;
-    gridLayer.height = CANVAS_HEIGHT;
-
-    const segmentLayer = document.createElement('canvas');
-    segmentLayer.width = CANVAS_WIDTH;
-    segmentLayer.height = CANVAS_HEIGHT;
-
-    const layers = document.createElement('div');
-    layers.classList.add(classes.layers);
-    layers.appendChild(gridLayer);
-    layers.appendChild(segmentLayer);
+    const canvas = document.createElement('canvas');
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    const context = canvas.getContext('2d');
+    assert(context !== null);
 
     const pane = document.createElement('div');
     pane.setAttribute('touch-action', 'none'); // for Pointer Events Polyfill
@@ -149,16 +140,15 @@ export default class SynthGenie {
     pane.addEventListener('pointerup', this.handlers.removePointer);
     pane.addEventListener('pointercancel', this.handlers.removePointer);
     pane.addEventListener('contextmenu', (event) => event.preventDefault());
-    pane.appendChild(layers);
+    pane.appendChild(canvas);
 
     while (element.firstChild) element.firstChild.remove();
     element.appendChild(pane);
 
     this.pane = pane;
     this.element = element;
-    this.layers = layers;
-    this.gridLayer = gridLayer;
-    this.segmentLayer = segmentLayer;
+    this.canvas = canvas;
+    this.context = context;
 
     this.pointers = new Map();
 
@@ -407,42 +397,24 @@ export default class SynthGenie {
   }
 
   protected updateGrid() {
-    const gridLayerContext = this.gridLayer.getContext('2d');
-    assert(gridLayerContext !== null);
-    gridLayerContext.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    this.context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     if (this.showBar) {
-      SynthGenie.paintBar(gridLayerContext, this.position, this.numNotes);
+      this.paintBar();
     }
     if (this.showGrid) {
-      SynthGenie.paintCells(gridLayerContext, this.segments, this.numNotes);
-      SynthGenie.paintGrid(gridLayerContext, this.numNotes);
+      this.paintCells();
+      this.paintGrid();
     }
 
-    const segmentLayerContext = this.gridLayer.getContext('2d');
-    assert(segmentLayerContext !== null);
-    SynthGenie.paintSegments(
-      segmentLayerContext,
-      this.segments,
-      this.numNotes,
-      this.dotColor,
-      this.relativeDotSize,
-      this.lineColor,
-      this.relativeLineWidth,
-    );
+    this.paintSegments();
   }
 
-  protected static paintSegments(
-    context: RenderingContext2D,
-    segments: Segments<number>,
-    numNotes: number,
-    dotColor: string,
-    relativeDotSize: number,
-    lineColor: string,
-    relativeLineWidth: number,
-  ) {
+  protected paintSegments() {
+    const { segments } = this;
+
     // compute segments
     const controlPointsPerSegment: { x: number; y: number }[][] = [];
-    const stepX = CANVAS_WIDTH / numNotes;
+    const stepX = CANVAS_WIDTH / segments.size;
     const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
     let cellX = 0;
     for (let i = 0; i < segments.numSegments; i += 1) {
@@ -463,8 +435,11 @@ export default class SynthGenie {
 
     const minCellDim = Math.min(
       CANVAS_HEIGHT / NUM_BUTTONS,
-      CANVAS_WIDTH / numNotes,
+      CANVAS_WIDTH / segments.size,
     );
+
+    const { context, relativeDotSize, dotColor, relativeLineWidth, lineColor } =
+      this;
 
     context.save();
     const dotRadius = minCellDim * relativeDotSize * 0.5;
@@ -511,12 +486,14 @@ export default class SynthGenie {
     context.restore();
   }
 
-  protected static paintGrid(context: RenderingContext2D, numNotes: number) {
+  protected paintGrid() {
+    const { context, segments } = this;
+
     context.save();
     context.beginPath();
     context.strokeStyle = '#b3b2b2';
-    const stepX = CANVAS_WIDTH / numNotes;
-    for (let i = 1; i < numNotes; i += 1) {
+    const stepX = CANVAS_WIDTH / segments.size;
+    for (let i = 1; i < segments.size; i += 1) {
       const x = stepX * i;
       context.moveTo(x, 0);
       context.lineTo(x, CANVAS_HEIGHT);
@@ -532,19 +509,17 @@ export default class SynthGenie {
     context.restore();
   }
 
-  protected static paintCells(
-    context: RenderingContext2D,
-    segments: Segments<number>,
-    numNotes: number,
-  ) {
+  protected paintCells() {
+    const { context, segments } = this;
+
     context.save();
     context.beginPath();
     context.fillStyle = '#b3b2b2';
-    const stepX = CANVAS_WIDTH / numNotes;
+    const stepX = CANVAS_WIDTH / segments.size;
     const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
     let cellX = 0;
-    for (let i = 0; i < segments.numSegments; i += 1) {
-      const segment = segments.getSegment(i);
+    for (let i = 0; i < this.segments.numSegments; i += 1) {
+      const segment = this.segments.getSegment(i);
       assert(typeof segment !== 'undefined');
       for (let j = 0; j < segment.length; j += 1) {
         const cellY = segment[j];
@@ -561,15 +536,13 @@ export default class SynthGenie {
     context.restore();
   }
 
-  protected static paintBar(
-    context: RenderingContext2D,
-    pos: number,
-    numNotes: number,
-  ) {
+  protected paintBar() {
+    const { context } = this;
+
     context.save();
     context.fillStyle = 'rgba(211,211,211,0.4)';
-    const stepX = CANVAS_WIDTH / numNotes;
-    const x = stepX * pos;
+    const stepX = CANVAS_WIDTH / this.numNotes;
+    const x = stepX * this.position;
     context.fillRect(x, 0, stepX, CANVAS_WIDTH);
     context.restore();
   }
