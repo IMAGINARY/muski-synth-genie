@@ -16,6 +16,51 @@ const LOWEST_PIANO_KEY_MIDI_NOTE = 21;
 const NUM_BEATS = 16;
 const NUM_BUTTONS = 8;
 
+const exponentialEnvelopeCurve: Tone.EnvelopeCurve = 'exponential';
+const envelopeOptions = {
+  attack: 0.01,
+  attackCurve: exponentialEnvelopeCurve,
+  decay: 0.01,
+  decayCurve: exponentialEnvelopeCurve,
+  release: 0.5,
+  releaseCurve: exponentialEnvelopeCurve,
+  sustain: 0.9,
+};
+const SYNTH_OPTIONS: ConstructorParameters<typeof Tone.AMSynth>[0] = {
+  volume: 0,
+  detune: 0,
+  portamento: 0,
+  harmonicity: 2.5,
+  oscillator: {
+    phase: 0,
+    type: 'fatsawtooth',
+    count: 3,
+    spread: 20,
+  },
+  envelope: {
+    attack: 0.1,
+    attackCurve: 'linear',
+    decay: 0.2,
+    decayCurve: 'exponential',
+    release: 0.3,
+    releaseCurve: 'exponential',
+    sustain: 0.2,
+  },
+  modulation: {
+    phase: 0,
+    type: 'square',
+  },
+  modulationEnvelope: {
+    attack: 0.5,
+    attackCurve: 'linear',
+    decay: 0.01,
+    decayCurve: 'exponential',
+    release: 0.5,
+    releaseCurve: 'exponential',
+    sustain: 1,
+  },
+};
+
 function computeAllowedPianoKeys(minMidiNote: number, maxMidiNote: number) {
   assert(minMidiNote < maxMidiNote);
   const keyMin = Math.max(0, minMidiNote - LOWEST_PIANO_KEY_MIDI_NOTE);
@@ -99,7 +144,7 @@ export default class SynthGenie {
 
   protected relativeLineWidth: number;
 
-  protected synthOptions: Partial<Tone.AMSynthOptions>;
+  protected synthOptions: ConstructorParameters<typeof Tone.AMSynth>[0];
 
   protected synthPool: Tone.AMSynth[];
 
@@ -165,17 +210,7 @@ export default class SynthGenie {
     this.genie = new PianoGenie(PIANO_GENIE_CHECKPOINT);
     this.gain = new Tone.Gain(1).toDestination();
 
-    const exponentialEnvelopeCurve: Tone.EnvelopeCurve = 'exponential';
-    const envelopeOptions = {
-      attack: 0.01,
-      attackCurve: exponentialEnvelopeCurve,
-      decay: 0.01,
-      decayCurve: exponentialEnvelopeCurve,
-      release: 0.5,
-      releaseCurve: exponentialEnvelopeCurve,
-      sustain: 0.9,
-    };
-    this.synthOptions = { envelope: envelopeOptions };
+    this.synthOptions = SYNTH_OPTIONS;
     this.synthPool = [];
     this.synth = null;
     this.timer = 0;
