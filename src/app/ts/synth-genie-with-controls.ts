@@ -57,6 +57,9 @@ export default class SynthGenieWithControls extends SynthGenie {
     const handleBeatLengthChange = () => {
       beatLengthLabel.innerText = `${beatLengthSlider.value}ms`;
       this.beatLength = beatLengthSlider.valueAsNumber;
+      const wasPlaying = this.isPlaying();
+      this.pause();
+      if (wasPlaying) this.play();
     };
     handleBeatLengthChange();
     beatLengthSlider.addEventListener('input', handleBeatLengthChange);
@@ -203,5 +206,22 @@ export default class SynthGenieWithControls extends SynthGenie {
       this.updateGrid();
       this.genie.resetState();
     });
+
+    const playPauseButton =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#play-pause-button',
+      );
+    assert(playPauseButton !== null);
+
+    const handlePlayPauseClicked = () => {
+      if (this.isPlaying()) {
+        this.pause();
+        playPauseButton.value = 'Play';
+      } else {
+        this.play();
+        playPauseButton.value = 'Pause';
+      }
+    };
+    playPauseButton.addEventListener('click', handlePlayPauseClicked);
   }
 }

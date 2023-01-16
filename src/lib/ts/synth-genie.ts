@@ -98,6 +98,14 @@ export default class SynthGenie {
 
   protected relativeLineWidth: number;
 
+  protected synthOptions: Partial<Tone.AMSynthOptions>;
+
+  protected synthPool: Tone.AMSynth[];
+
+  protected synth: Tone.AMSynth | null;
+
+  protected timer: ReturnType<typeof setInterval> | 0;
+
   protected constructor(
     element: Element,
     options: Partial<SynthGenieOptions> = {},
@@ -155,6 +163,21 @@ export default class SynthGenie {
     this.genie = new PianoGenie(PIANO_GENIE_CHECKPOINT);
     this.gain = new Tone.Gain(1).toDestination();
 
+    const exponentialEnvelopeCurve: Tone.EnvelopeCurve = 'exponential';
+    const envelopeOptions = {
+      attack: 0.01,
+      attackCurve: exponentialEnvelopeCurve,
+      decay: 0.01,
+      decayCurve: exponentialEnvelopeCurve,
+      release: 0.5,
+      releaseCurve: exponentialEnvelopeCurve,
+      sustain: 0.9,
+    };
+    this.synthOptions = { envelope: envelopeOptions };
+    this.synthPool = [];
+    this.synth = null;
+    this.timer = 0;
+
     this.updateGrid();
   }
 
@@ -167,105 +190,112 @@ export default class SynthGenie {
     return synthGenie;
   }
 
+  play() {
+    if (this.timer === 0) {
+      const { beatLength } = this;
+      this.timer = setTimeout(() => {
+        this.timer = setInterval(() => this.playBeat(), beatLength);
+      }, 0);
+    }
+  }
+
+  pause() {
+    if (this.timer !== 0) {
+      clearTimeout(this.timer);
+      clearInterval(this.timer);
+      this.timer = 0;
+      if (this.synth !== null) {
+        this.releaseAndFreeSynth(this.synth, 0);
+        this.synth = null;
+      }
+    }
+  }
+
+  isPlaying() {
+    return this.timer !== 0;
+  }
+
+  protected playBeat() {
+    const { genie } = this;
+
+    const { segment, indexInSegment } = this.segments.getSegmentOf(
+      this.position,
+    );
+    const cell = segment[indexInSegment];
+    assert(typeof cell !== 'undefined');
+
+    if (this.synth !== null && cell === -1) {
+      // note still ringing, but shouldn't (grid values changed)
+      this.releaseAndFreeSynth(this.synth, 0);
+      this.synth = null;
+    }
+
+    if (cell !== -1) {
+      const frequency = this.getGenieFrequency(cell);
+
+      const attack =
+        this.synth === null || indexInSegment === 0 || !this.sustainInSegments;
+      const release =
+        indexInSegment === segment.length - 1 || !this.sustainInSegments;
+
+      this.synth = this.synth ?? this.synthPool.pop() ?? this.createSynth();
+
+      if (attack) {
+        // attack
+        this.synth.triggerAttack(frequency);
+      } else {
+        // ramp to next note frequency
+        this.synth.triggerAttack(frequency);
+        //          synth.frequency.value = frequency;
+        //          synth.frequency.exponentialRampTo(frequency, 50 / 1000);
+      }
+      if (release) {
+        // release note at the end of this cell
+        const noteDuration = (this.beatLength * this.relativeNoteLength) / 1000;
+        this.releaseAndFreeSynth(this.synth, noteDuration);
+        this.synth = null;
+      }
+    }
+
+    this.updateGrid();
+
+    this.position += 1;
+    if (this.position === this.segments.size) {
+      this.position = 0;
+      this.loopCount += 1;
+      if (this.resetStateOnLoop) genie.resetState();
+    }
+  }
+
+  createSynth() {
+    return new Tone.AMSynth(this.synthOptions).connect(this.gain);
+  }
+
+  releaseAndFreeSynth(synth: Tone.AMSynth, seconds: number) {
+    synth.triggerRelease(Tone.now() + seconds);
+    const releaseDuration = Tone.Time(synth.envelope.release).toSeconds();
+    const toneDuration = seconds + releaseDuration;
+    setTimeout(() => this.synthPool.push(synth), toneDuration * 1000);
+  }
+
+  getGenieFrequency(cell: number) {
+    const genieButton = NUM_BUTTONS - 1 - cell;
+    const pianoKey = this.genie.nextFromKeyList(
+      genieButton,
+      this.allowedPianoKeys,
+      TEMPERATURE,
+    );
+    const midiNote = LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
+    const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
+    return frequency;
+  }
+
   async init() {
     const { genie } = this;
     await genie.initialize();
     console.log('🧞‍♀️ ready!');
 
-    const getGenieFrequency = (cell: number) => {
-      const genieButton = NUM_BUTTONS - 1 - cell;
-      const pianoKey = genie.nextFromKeyList(
-        genieButton,
-        this.allowedPianoKeys,
-        TEMPERATURE,
-      );
-      const midiNote = LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
-      const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
-      return frequency;
-    };
-
-    const exponentialEnvelopeCurve: Tone.EnvelopeCurve = 'exponential';
-    const envelopeOptions = {
-      attack: 0.01,
-      attackCurve: exponentialEnvelopeCurve,
-      decay: 0.01,
-      decayCurve: exponentialEnvelopeCurve,
-      release: 0.5,
-      releaseCurve: exponentialEnvelopeCurve,
-      sustain: 0.9,
-    };
-    const synthOptions = { envelope: envelopeOptions };
-
-    console.log(new Tone.AMSynth(synthOptions).toDestination());
-
-    const synthPool: Tone.AMSynth[] = [];
-    let numSynth = 0;
-    const createSynth = () => {
-      numSynth += 1;
-      console.log(`Synth pool size: ${synthPool.length} (created:${numSynth})`);
-      return new Tone.AMSynth(synthOptions).connect(this.gain);
-    };
-
-    const releaseAndFreeSynth = (synth: Tone.AMSynth, seconds: number) => {
-      synth.triggerRelease(Tone.now() + seconds);
-      const releaseDuration = Tone.Time(synth.envelope.release).toSeconds();
-      const toneDuration = seconds + releaseDuration;
-      setTimeout(() => synthPool.push(synth), toneDuration * 1000);
-    };
-
-    let synth: Tone.AMSynth | null = null;
-    const nextNote = () => {
-      const { segment, indexInSegment } = this.segments.getSegmentOf(
-        this.position,
-      );
-      const cell = segment[indexInSegment];
-      assert(typeof cell !== 'undefined');
-
-      if (synth !== null && cell === -1) {
-        // note still ringing, but shouldn't (grid values changed)
-        releaseAndFreeSynth(synth, 0);
-        synth = null;
-      }
-
-      if (cell !== -1) {
-        const frequency = getGenieFrequency(cell);
-
-        const attack =
-          synth === null || indexInSegment === 0 || !this.sustainInSegments;
-        const release =
-          indexInSegment === segment.length - 1 || !this.sustainInSegments;
-
-        synth = synth ?? synthPool.pop() ?? createSynth();
-
-        if (attack) {
-          // attack
-          synth.triggerAttack(frequency);
-        } else {
-          // ramp to next note frequency
-          synth.triggerAttack(frequency);
-          //          synth.frequency.value = frequency;
-          //          synth.frequency.exponentialRampTo(frequency, 50 / 1000);
-        }
-        if (release) {
-          // release note at the end of this cell
-          const noteDuration =
-            (this.beatLength * this.relativeNoteLength) / 1000;
-          releaseAndFreeSynth(synth, noteDuration);
-          synth = null;
-        }
-      }
-
-      this.updateGrid();
-
-      this.position += 1;
-      if (this.position === this.segments.size) {
-        this.position = 0;
-        this.loopCount += 1;
-        if (this.resetStateOnLoop) genie.resetState();
-      }
-      setTimeout(nextNote, this.beatLength);
-    };
-    nextNote();
+    this.play();
   }
 
   getOptions() {
