@@ -1,5 +1,4 @@
 import { strict as assert } from 'assert';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import * as Tone from 'tone';
 
 import SynthGenie, { SynthGenieOptions } from '../../lib/ts';

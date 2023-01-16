@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { tf, PianoGenie } from '@magenta/music';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import * as Tone from 'tone'; // Part of @magenta/music, but not in package.json
+import * as Tone from 'tone';
 import { strict as assert } from 'assert';
 
 import classes from '../scss/canvas.module.scss';

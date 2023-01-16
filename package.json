@@ -80,7 +80,8 @@
   },
   "dependencies": {
     "@magenta/music": "^1.23.1",
-    "@swc/helpers": "^0.4.14"
+    "@swc/helpers": "^0.4.14",
+    "tone": "^14.7.77"
   },
   "scripts": {
     "serve": "parcel serve --dist-dir dist-dev --target app",
