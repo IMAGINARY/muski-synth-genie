@@ -3,7 +3,7 @@ import { tf, PianoGenie } from '@magenta/music';
 import * as Tone from 'tone';
 import { strict as assert } from 'assert';
 
-import classes from '../scss/canvas.module.scss';
+import classes from '../scss/synth-genie.module.scss';
 import { getRelativePointerPosition, getCurvePoints } from './util';
 import Segments from './segments';
 
