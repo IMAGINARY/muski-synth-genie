@@ -86,6 +86,8 @@ export default class SynthGenie {
 
   protected sustainInSegments: boolean;
 
+  protected slideInSegments: boolean;
+
   protected showGrid: boolean;
 
   protected showBar: boolean;
@@ -119,6 +121,7 @@ export default class SynthGenie {
     this.loopCount = 0;
     this.resetStateOnLoop = true;
     this.sustainInSegments = true;
+    this.slideInSegments = true;
     this.showGrid = true;
     this.showBar = true;
     this.beatLength = 250;
@@ -240,18 +243,17 @@ export default class SynthGenie {
 
       this.synth = this.synth ?? this.synthPool.pop() ?? this.createSynth();
 
-      if (attack) {
+      const noteDuration = (this.beatLength * this.relativeNoteLength) / 1000;
+
+      if (attack || !this.slideInSegments) {
         // attack
         this.synth.triggerAttack(frequency);
       } else {
         // ramp to next note frequency
-        this.synth.triggerAttack(frequency);
-        //          synth.frequency.value = frequency;
-        //          synth.frequency.exponentialRampTo(frequency, 50 / 1000);
+        this.synth.frequency.exponentialRampTo(frequency, noteDuration * 0.1);
       }
       if (release) {
         // release note at the end of this cell
-        const noteDuration = (this.beatLength * this.relativeNoteLength) / 1000;
         this.releaseAndFreeSynth(this.synth, noteDuration);
         this.synth = null;
       }

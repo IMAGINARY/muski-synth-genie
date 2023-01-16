@@ -182,6 +182,23 @@ export default class SynthGenieWithControls extends SynthGenie {
       handleSustainInSegmentsChange,
     );
 
+    const slideInSegmentsCheckBox =
+      this.element.ownerDocument.querySelector<HTMLInputElement>(
+        '#slide-in-segments-checkbox',
+      );
+    assert(slideInSegmentsCheckBox !== null);
+    const handleSlideInSegmentsChange = () => {
+      this.slideInSegments = slideInSegmentsCheckBox.checked;
+      const wasPlaying = this.isPlaying();
+      this.pause();
+      if (wasPlaying) this.play();
+    };
+    handleSlideInSegmentsChange();
+    slideInSegmentsCheckBox.addEventListener(
+      'input',
+      handleSlideInSegmentsChange,
+    );
+
     const muteCheckBox =
       this.element.ownerDocument.querySelector<HTMLInputElement>(
         '#mute-checkbox',
