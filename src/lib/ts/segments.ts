@@ -3,14 +3,11 @@ export default class Segments<T> {
 
   public _size: number;
 
-  public _numSegments: number;
-
   protected defaultValueCallback: () => T;
 
   constructor(size: number, defaultValueCallback: () => T) {
     this.segments = [new Array(size).fill(undefined).map(defaultValueCallback)];
     this._size = size;
-    this._numSegments = 1;
     this.defaultValueCallback = defaultValueCallback;
   }
 
@@ -19,7 +16,7 @@ export default class Segments<T> {
   }
 
   get numSegments() {
-    return this._numSegments;
+    return this.segments.length;
   }
 
   findSegmentIndex(x: number): {
@@ -93,7 +90,6 @@ export default class Segments<T> {
     const upper = segment.slice(indexInSegment);
     const lower = segment.slice(0, indexInSegment);
     this.segments.splice(segmentIndex, 1, lower, upper);
-    this._numSegments += 1;
 
     return segmentIndex + 1;
   }
@@ -173,7 +169,6 @@ export default class Segments<T> {
     const upper = this.segments[segmentIndex];
     this.segments.splice(segmentIndex, 1);
     lower.push(...upper);
-    this._numSegments -= 1;
 
     return segmentIndex - 1;
   }
