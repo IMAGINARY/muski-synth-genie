@@ -7,11 +7,6 @@ function getRelativePointerPosition(pe: PointerEvent, elem: HTMLElement) {
   return { x, y, relX, relY, width, height };
 }
 
-function setPosition(element: HTMLElement, x: number, y: number) {
-  const { style } = element;
-  style.transform = `translate(${x}px, ${y}px)`;
-}
-
 function getCurvePoints(
   points: { x: number; y: number }[],
   tension = 0.5,
@@ -25,7 +20,7 @@ function getCurvePoints(
   // The algorithm require a previous and next point to the actual point array.
   // Check if we will draw closed or open curve.
   // If closed, copy end points to beginning and first points to end
-  // If open, duplicate first points to befinning, end points to end
+  // If open, duplicate first points to beginning, end points to end
   const firstPoint = points[0];
   const lastPoint = points[points.length - 1];
   if (isClosed) {
@@ -72,4 +67,4 @@ function getCurvePoints(
   return res;
 }
 
-export { getRelativePointerPosition, setPosition, getCurvePoints };
+export { getRelativePointerPosition, getCurvePoints };

@@ -1,58 +1,26 @@
+/* eslint-disable no-console */
 import { tf, PianoGenie } from '@magenta/music';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import * as Tone from 'tone';
+import * as Tone from 'tone'; // Part of @magenta/music, but not in package.json
 import { strict as assert } from 'assert';
 
 import classes from '../scss/canvas.module.scss';
 import { getRelativePointerPosition, getCurvePoints } from './util';
 import Segments from './segments';
 
-window.Segments = Segments;
-
 tf.disableDeprecationWarnings();
 
-const CONSTANTS = {
-  COLORS: [
-    '#EE2B29',
-    '#ff9800',
-    '#ffff00',
-    '#c6ff00',
-    '#00e5ff',
-    '#2979ff',
-    '#651fff',
-    '#d500f9',
-  ],
-  NUM_BUTTONS: 8,
-  NOTES_PER_OCTAVE: 12,
-  WHITE_NOTES_PER_OCTAVE: 7,
-  LOWEST_PIANO_KEY_MIDI_NOTE: 21,
-  GENIE_CHECKPOINT:
-    'https://storage.googleapis.com/magentadata/js/checkpoints/piano_genie/model/epiano/stp_iq_auto_contour_dt_166006',
-};
+const PIANO_GENIE_CHECKPOINT =
+  'https://storage.googleapis.com/magentadata/js/checkpoints/piano_genie/model/epiano/stp_iq_auto_contour_dt_166006';
 
-const NUM_NOTES = 16;
-const NUM_BUTTONS = CONSTANTS.NUM_BUTTONS;
-const NOTE_DURATION_MS = 250;
-
-const MINOR = [0, 2, 3, 5, 7, 8, 10];
-const MAJOR = [0, 2, 4, 5, 7, 9, 11];
-const CHROMATIC = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const SCALE = CHROMATIC;
-
-const ROOT_NOTE = CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE;
-const OCTAVES = 7;
-const totalNotes = CONSTANTS.NOTES_PER_OCTAVE * OCTAVES;
+const LOWEST_PIANO_KEY_MIDI_NOTE = 21;
+const NUM_BEATS = 16;
+const NUM_BUTTONS = 8;
 
 function computeAllowedPianoKeys(minMidiNote: number, maxMidiNote: number) {
   assert(minMidiNote < maxMidiNote);
-  const keyMin = Math.max(
-    0,
-    minMidiNote - CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE,
-  );
-  const maxKey = Math.min(
-    maxMidiNote - CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE,
-    88 - 1,
-  );
+  const keyMin = Math.max(0, minMidiNote - LOWEST_PIANO_KEY_MIDI_NOTE);
+  const maxKey = Math.min(maxMidiNote - LOWEST_PIANO_KEY_MIDI_NOTE, 88 - 1);
   const numKeys = Math.max(0, maxKey - keyMin + 1);
   const keys = new Array(numKeys).fill(0).map((_, i) => keyMin + i);
   console.log(keys);
@@ -134,7 +102,7 @@ export default class SynthGenie {
     console.log('Starting');
     this._options = { ...defaultOptions, ...options };
 
-    this.numNotes = NUM_NOTES;
+    this.numNotes = NUM_BEATS;
     this.segments = new Segments(this.numNotes, () => -1);
     this.position = 0;
     this.loopCount = 0;
@@ -189,7 +157,7 @@ export default class SynthGenie {
 
     this.pointers = new Map();
 
-    this.genie = new PianoGenie(CONSTANTS.GENIE_CHECKPOINT);
+    this.genie = new PianoGenie(PIANO_GENIE_CHECKPOINT);
     this.gain = new Tone.Gain(1).toDestination();
 
     this.updateGrid();
@@ -277,37 +245,39 @@ export default class SynthGenie {
       );
     assert(maxMidiNoteSlider !== null);
 
-    const handleMinMidiNoteChange = () => {
-      const midiNote = minMidiNoteSlider.valueAsNumber;
-      const noteName = Tone.Frequency(midiNote, 'midi').toNote();
-      minMidiNoteLabel.innerText = `${noteName} (MIDI ${midiNote})`;
-      this.minMidiNote = minMidiNoteSlider.valueAsNumber;
-      if (maxMidiNoteSlider.valueAsNumber < midiNote + 2) {
-        maxMidiNoteSlider.valueAsNumber = midiNote + 2;
-        handleMaxMidiNoteChange();
-      }
-      this.allowedPianoKeys = computeAllowedPianoKeys(
-        this.minMidiNote,
-        this.maxMidiNote,
-      );
-    };
+    const { handleMinMidiNoteChange, handleMaxMidiNoteChange } = (() => ({
+      handleMinMidiNoteChange: () => {
+        const midiNote = minMidiNoteSlider.valueAsNumber;
+        const noteName = Tone.Frequency(midiNote, 'midi').toNote();
+        minMidiNoteLabel.innerText = `${noteName} (MIDI ${midiNote})`;
+        this.minMidiNote = minMidiNoteSlider.valueAsNumber;
+        if (maxMidiNoteSlider.valueAsNumber < midiNote + 2) {
+          maxMidiNoteSlider.valueAsNumber = midiNote + 2;
+          handleMaxMidiNoteChange();
+        }
+        this.allowedPianoKeys = computeAllowedPianoKeys(
+          this.minMidiNote,
+          this.maxMidiNote,
+        );
+      },
+      handleMaxMidiNoteChange: () => {
+        const midiNote = maxMidiNoteSlider.valueAsNumber;
+        const noteName = Tone.Frequency(midiNote, 'midi').toNote();
+        maxMidiNoteLabel.innerText = `${noteName} (MIDI ${midiNote})`;
+        this.maxMidiNote = midiNote;
+        if (minMidiNoteSlider.valueAsNumber > midiNote - 2) {
+          minMidiNoteSlider.valueAsNumber = midiNote - 2;
+          handleMinMidiNoteChange();
+        }
+        this.allowedPianoKeys = computeAllowedPianoKeys(
+          this.minMidiNote,
+          this.maxMidiNote,
+        );
+      },
+    }))();
     handleMinMidiNoteChange();
-    minMidiNoteSlider.addEventListener('input', handleMinMidiNoteChange);
-    const handleMaxMidiNoteChange = () => {
-      const midiNote = maxMidiNoteSlider.valueAsNumber;
-      const noteName = Tone.Frequency(midiNote, 'midi').toNote();
-      maxMidiNoteLabel.innerText = `${noteName} (MIDI ${midiNote})`;
-      this.maxMidiNote = midiNote;
-      if (minMidiNoteSlider.valueAsNumber > midiNote - 2) {
-        minMidiNoteSlider.valueAsNumber = midiNote - 2;
-        handleMinMidiNoteChange();
-      }
-      this.allowedPianoKeys = computeAllowedPianoKeys(
-        this.minMidiNote,
-        this.maxMidiNote,
-      );
-    };
     handleMaxMidiNoteChange();
+    minMidiNoteSlider.addEventListener('input', handleMinMidiNoteChange);
     maxMidiNoteSlider.addEventListener('input', handleMaxMidiNoteChange);
 
     const resetStateCheckBox =
@@ -407,32 +377,33 @@ export default class SynthGenie {
         this.allowedPianoKeys,
         TEMPERATURE,
       );
-      const midiNote = CONSTANTS.LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
+      const midiNote = LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
       const frequency = Tone.Frequency(midiNote, 'midi').toFrequency();
       return frequency;
     };
 
+    const exponentialEnvelopeCurve: Tone.EnvelopeCurve = 'exponential';
     const envelopeOptions = {
       attack: 0.01,
-      attackCurve: 'exponential',
+      attackCurve: exponentialEnvelopeCurve,
       decay: 0.01,
-      decayCurve: 'exponential',
+      decayCurve: exponentialEnvelopeCurve,
       release: 0.5,
-      releaseCurve: 'exponential',
+      releaseCurve: exponentialEnvelopeCurve,
       sustain: 0.9,
     };
     const synthOptions = { envelope: envelopeOptions };
 
     console.log(new Tone.AMSynth(synthOptions).toDestination());
 
-    let numSynth = 1;
+    const synthPool: Tone.AMSynth[] = [];
+    let numSynth = 0;
     const createSynth = () => {
       numSynth += 1;
       console.log(`Synth pool size: ${synthPool.length} (created:${numSynth})`);
       return new Tone.AMSynth(synthOptions).connect(this.gain);
     };
 
-    const synthPool: Tone.AMSynth[] = [];
     const releaseAndFreeSynth = (synth: Tone.AMSynth, seconds: number) => {
       synth.triggerRelease(Tone.now() + seconds);
       const releaseDuration = Tone.Time(synth.envelope.release).toSeconds();
@@ -541,9 +512,7 @@ export default class SynthGenie {
     const { x, y, relX, relY } = getRelativePointerPosition(pe, this.pane);
     const pointerData = this.pointers.get(id);
     assert(typeof pointerData !== 'undefined');
-    const { x: prevX, y: prevY } = pointerData;
 
-    const { numNotes } = this;
     const { cellX, cellY } = this.getCellCoordinates(relX, relY);
     this.pointers.set(id, { x, y, cellX });
     if (cellX >= 0 && cellX < this.numNotes) {
@@ -609,7 +578,7 @@ export default class SynthGenie {
     // compute segments
     const controlPointsPerSegment: { x: number; y: number }[][] = [];
     const stepX = CANVAS_WIDTH / numNotes;
-    const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
+    const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
     let cellX = 0;
     for (let i = 0; i < segments.numSegments; i += 1) {
       const segment = segments.getSegment(i);
@@ -687,8 +656,8 @@ export default class SynthGenie {
       context.moveTo(x, 0);
       context.lineTo(x, CANVAS_HEIGHT);
     }
-    const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
-    for (let i = 1; i < CONSTANTS.NUM_BUTTONS; i += 1) {
+    const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
+    for (let i = 1; i < NUM_BUTTONS; i += 1) {
       const y = stepY * i;
       context.moveTo(0, y);
       context.lineTo(CANVAS_WIDTH, y);
@@ -707,7 +676,7 @@ export default class SynthGenie {
     context.beginPath();
     context.fillStyle = '#b3b2b2';
     const stepX = CANVAS_WIDTH / numNotes;
-    const stepY = CANVAS_HEIGHT / CONSTANTS.NUM_BUTTONS;
+    const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
     let cellX = 0;
     for (let i = 0; i < segments.numSegments; i += 1) {
       const segment = segments.getSegment(i);

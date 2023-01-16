@@ -1,4 +1,5 @@
-const helloWorld = "Hello World!"
+import SynthGenie from './synth-genie';
 
+export * from './synth-genie';
 
-export default helloWorld;
+export default SynthGenie;
