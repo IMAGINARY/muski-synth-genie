@@ -408,8 +408,15 @@ export default class SynthGenie {
       }
     } else {
       // different x cell (possibly with some columns in between)
-      this.connectCells(pointerData, { cellX, cellY });
-      if (prevCellX !== -1 && cellX !== -1) {
+      const [previousSegmentIndex, segmentIndex] = this.connectCells(
+        pointerData,
+        { cellX, cellY },
+      );
+      if (
+        prevCellX !== -1 &&
+        cellX !== -1 &&
+        previousSegmentIndex !== segmentIndex
+      ) {
         if (prevCellX < cellX) {
           segments.splitAfter(cellX);
         } else {
