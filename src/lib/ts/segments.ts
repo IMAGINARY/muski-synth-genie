@@ -28,8 +28,10 @@ export default class Segments<T> {
   } {
     let numElements = 0;
     let segmentIndex = 0;
-    // find the first segment we need to modify
-    while (numElements + this.segments[segmentIndex].length <= x) {
+    while (
+      segmentIndex < this.segments.length &&
+      numElements + this.segments[segmentIndex].length <= x
+    ) {
       numElements += this.segments[segmentIndex].length;
       segmentIndex += 1;
     }
@@ -76,11 +78,16 @@ export default class Segments<T> {
    * Split segments before in front of x.
    * @param x
    */
-  split(x: number): boolean {
-    if (x <= 0 || x >= this.size) return false; // out of range
+  splitBefore(x: number): number {
+    if (x < 0 || x >= this.size) return -1; // out of range
+
+    if (x === 0) return 0;
 
     const { segmentIndex, indexInSegment } = this.findSegmentIndex(x);
-    if (indexInSegment === 0) return false; // a segment starts at x -> no split necessary
+    if (indexInSegment === 0) {
+      // a segment starts at x -> no split necessary
+      return segmentIndex;
+    }
 
     const segment = this.segments[segmentIndex];
     const upper = segment.slice(indexInSegment);
@@ -88,26 +95,79 @@ export default class Segments<T> {
     this.segments.splice(segmentIndex, 1, lower, upper);
     this._numSegments += 1;
 
-    return true;
+    return segmentIndex + 1;
+  }
+
+  splitAfter(x: number): number {
+    if (x < 0 || x >= this.size) return -1; // out of range
+
+    if (x === this.size - 1) return this.size - 1;
+
+    return this.splitBefore(x + 1) + 1;
   }
 
   /** Split segment before and after x.
    *
-   * @param x
+   * @param x The index of the element to put into an isolated segment.
    */
-  isolate(x: number): boolean {
-    return this.split(x) || this.split(x + 1);
+  isolate(x: number): number {
+    this.splitAfter(x);
+    return this.splitBefore(x);
+  }
+
+  protected join1(x: number): number {
+    if (x <= 0 || x >= this.size) return -1; // out of range
+
+    const { segmentIndex, indexInSegment } = this.findSegmentIndex(x);
+    if (indexInSegment !== 0) this.joinSegments(segmentIndex);
+
+    return segmentIndex;
+  }
+
+  protected join2(x0: number, x1: number): [number, number] {
+    if (x0 > x1) {
+      const [segmentIndex1, segmentIndex0] = this.join2(x1, x0);
+      return [segmentIndex0, segmentIndex1];
+    }
+
+    if (x1 < 0 || x0 >= this.size) return [-1, -1];
+
+    const clampedX0 = Math.min(this.size - 1, Math.max(x0, 0));
+    const clampedX1 = Math.min(this.size - 1, Math.max(x1, 0));
+
+    const { segmentIndex: segmentIndex0 } = this.findSegmentIndex(clampedX0);
+    const { segmentIndex: segmentIndex1 } = this.findSegmentIndex(clampedX1);
+
+    for (let i = 0; i < segmentIndex1 - segmentIndex0; i += 1) {
+      this.joinSegments(segmentIndex0 + 1);
+    }
+
+    return [x0 < 0 ? -1 : segmentIndex0, x1 >= this.size ? -1 : segmentIndex1];
   }
 
   /**
    * Join segments containing indices x-1 and x.
-   * @param x
+   *
+   * @param x The index of the element to join with the element in front of it.
    */
-  join(x: number): boolean {
-    if (x <= 0 || x >= this.size) return false; // out of range
+  join(x: number): number;
+  /**
+   * Join all segments inbetween x0 and x1 (inclusive).
+   * @param x0 The index of the element in the first element.
+   * @param x1 The index of the element in the second element.
+   */
+  join(x0: number, x1: number): [number, number];
+  join(x0: number, x1?: number): number | [number, number] {
+    return typeof x1 === 'undefined' ? this.join1(x0) : this.join2(x0, x1);
+  }
 
-    const { segmentIndex, indexInSegment } = this.findSegmentIndex(x);
-    if (indexInSegment !== 0) return false; // no segment starts at x -> no join necessary
+  /**
+   * Join the segment with the one in front of it.
+   *
+   * @param segmentIndex The index of the segment to join with its predecessor.
+   */
+  joinSegments(segmentIndex: number): number {
+    if (segmentIndex <= 0 || segmentIndex >= this.numSegments) return -1;
 
     const lower = this.segments[segmentIndex - 1];
     const upper = this.segments[segmentIndex];
@@ -115,7 +175,7 @@ export default class Segments<T> {
     lower.push(...upper);
     this._numSegments -= 1;
 
-    return true;
+    return segmentIndex - 1;
   }
 
   resize(size: number) {
@@ -126,7 +186,7 @@ export default class Segments<T> {
       );
       this._size = size;
     } else if (size > 0 && size < this.size) {
-      this.split(size);
+      this.splitBefore(size);
       const { segmentIndex } = this.findSegmentIndex(size);
       this.segments.splice(segmentIndex);
       this._size = size;

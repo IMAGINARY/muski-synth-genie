@@ -40,6 +40,11 @@ type RenderingContext2D =
   | CanvasRenderingContext2D
   | OffscreenCanvasRenderingContext2D;
 
+type CellData = {
+  cellX: number;
+  cellY: number;
+};
+
 export default class SynthGenie {
   protected readonly _options: SynthGenieOptions;
 
@@ -49,7 +54,7 @@ export default class SynthGenie {
 
   protected pane: HTMLDivElement;
 
-  protected pointers: Map<number, { x: number; y: number; cellX: number }>;
+  protected pointers: Map<number, CellData>;
 
   protected layers: HTMLDivElement;
 
@@ -491,45 +496,91 @@ export default class SynthGenie {
   protected addPointer(pe: PointerEvent) {
     this.removePointer(pe);
     this.pane.addEventListener('pointermove', this.handlers.updatePointer);
-
     this.pane.setPointerCapture(pe.pointerId);
 
-    const { x, y, relX, relY } = getRelativePointerPosition(pe, this.pane);
+    const { relX, relY } = getRelativePointerPosition(pe, this.pane);
+    const { cellX, cellY } = this.getCellCoordinates(relX, relY);
+    this.pointers.set(pe.pointerId, { cellX, cellY });
 
-    const { cellX } = this.getCellCoordinates(relX, relY);
-    this.segments.split(cellX);
-    this.segments.split(cellX + 1);
+    const { segments } = this;
+    segments.isolate(cellX);
+    segments.set(cellX, cellY);
 
-    this.pointers.set(pe.pointerId, { x, y, cellX });
-
-    this.updatePointer(pe);
+    this.updateGrid();
   }
 
   protected updatePointer(pe: PointerEvent) {
     if (pe.buttons === 0) return;
 
     const id = pe.pointerId;
-    const { x, y, relX, relY } = getRelativePointerPosition(pe, this.pane);
+    const { relX, relY } = getRelativePointerPosition(pe, this.pane);
     const pointerData = this.pointers.get(id);
     assert(typeof pointerData !== 'undefined');
+    const { cellX: prevCellX, cellY: prevCellY } = pointerData;
 
     const { cellX, cellY } = this.getCellCoordinates(relX, relY);
-    this.pointers.set(id, { x, y, cellX });
-    if (cellX >= 0 && cellX < this.numNotes) {
-      // TODO: all cell on the connecting line should be activated, e.g. when pointer is moved quickly
-      this.segments.set(cellX, cellY >= 0 && cellY < NUM_BUTTONS ? cellY : -1);
-      const { cellX: prevCellX } = pointerData;
-      if (prevCellX !== cellX) {
-        const { segmentIndex: prevSegmentIndex } =
-          this.segments.findSegmentIndex(prevCellX);
-        const { segmentIndex } = this.segments.findSegmentIndex(cellX);
-        if (prevSegmentIndex !== segmentIndex) {
-          this.segments.isolate(cellX);
-          this.segments.join(prevCellX < cellX ? cellX : prevCellX);
+    this.pointers.set(id, { cellX, cellY });
+
+    const { segments } = this;
+    if (prevCellX === cellX) {
+      // same x cell
+      if (prevCellY !== cellY) {
+        // different y cell
+        if (cellY < 0 || cellY >= NUM_BUTTONS) {
+          // out of y range
+          segments.isolate(cellX);
+          segments.set(cellX, -1);
+        } else {
+          // within y range
+          segments.set(cellX, cellY);
+        }
+        this.updateGrid();
+      }
+    } else {
+      // different x cell (possibly with some columns in between)
+      this.connectCells(pointerData, { cellX, cellY });
+      if (prevCellX !== -1 && cellX !== -1) {
+        if (prevCellX < cellX) {
+          segments.splitAfter(cellX);
+        } else {
+          segments.splitBefore(cellX);
         }
       }
       this.updateGrid();
     }
+  }
+
+  protected connectCells(first: CellData, second: CellData): [number, number] {
+    if (second.cellX < first.cellX) {
+      const [secondSegmentIndex, firstSegmentIndex] = this.connectCells(
+        second,
+        first,
+      );
+      return [firstSegmentIndex, secondSegmentIndex];
+    }
+
+    const { cellX: x0, cellY: y0 } = first;
+    const { cellX: x1, cellY: y1 } = second;
+
+    const slope = (y1 - y0) / (x1 - x0);
+
+    const { segments } = this;
+    const [firstSegmentIndex, secondSegmentIndex] = segments.join(x0, x1);
+
+    const clampedX0 = Math.min(segments.size - 1, Math.max(x0, 0));
+    const clampedX1 = Math.min(segments.size - 1, Math.max(x1, 0));
+    for (let x = clampedX0; x <= clampedX1; x += 1) {
+      const y = Math.floor(y0 + slope * (x - x0));
+      if (y < 0 || y >= NUM_BUTTONS) {
+        // make it possible to disable columns by dragging them out of the y range
+        segments.isolate(x);
+        segments.set(x, -1);
+      } else {
+        segments.set(x, y);
+      }
+    }
+
+    return [firstSegmentIndex, secondSegmentIndex];
   }
 
   protected removePointer(pe: PointerEvent) {

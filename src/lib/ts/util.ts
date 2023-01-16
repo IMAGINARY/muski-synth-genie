@@ -1,7 +1,7 @@
 function getRelativePointerPosition(pe: PointerEvent, elem: HTMLElement) {
   const { left, top, width, height } = elem.getBoundingClientRect();
-  const x = Math.max(0, Math.min(pe.clientX - left, width));
-  const y = Math.max(0, Math.min(pe.clientY - top, height));
+  const x = pe.clientX - left;
+  const y = pe.clientY - top;
   const relX = x / width;
   const relY = y / height;
   return { x, y, relX, relY, width, height };
