@@ -56,11 +56,11 @@ $parcel$export($df410cf7d5f8b9de$exports, "default", function () { return $df410
 
 
 
-var $999d38ed27996e51$exports = {};
+var $e23a394c8f7de312$exports = {};
 
-$parcel$export($999d38ed27996e51$exports, "pane", function () { return $999d38ed27996e51$export$6dff30574f79a202; }, function (v) { return $999d38ed27996e51$export$6dff30574f79a202 = v; });
-var $999d38ed27996e51$export$6dff30574f79a202;
-$999d38ed27996e51$export$6dff30574f79a202 = "fWQdYq_pane";
+$parcel$export($e23a394c8f7de312$exports, "pane", function () { return $e23a394c8f7de312$export$6dff30574f79a202; }, function (v) { return $e23a394c8f7de312$export$6dff30574f79a202 = v; });
+var $e23a394c8f7de312$export$6dff30574f79a202;
+$e23a394c8f7de312$export$6dff30574f79a202 = "FC48wq_pane";
 
 
 function $aba086a96c3a6af4$export$79263550b33b988b(pe, elem) {
@@ -470,7 +470,7 @@ var $df410cf7d5f8b9de$export$2e2bcd8739ae039 = /*#__PURE__*/ function() {
         (0, $49SJR$assert.strict)(context !== null);
         var pane = document.createElement("div");
         pane.setAttribute("touch-action", "none"); // for Pointer Events Polyfill
-        pane.classList.add((0, (/*@__PURE__*/$parcel$interopDefault($999d38ed27996e51$exports))).pane);
+        pane.classList.add((0, (/*@__PURE__*/$parcel$interopDefault($e23a394c8f7de312$exports))).pane);
         pane.addEventListener("pointerdown", this.handlers.addPointer);
         pane.addEventListener("pointerup", this.handlers.removePointer);
         pane.addEventListener("pointercancel", this.handlers.removePointer);
@@ -706,11 +706,12 @@ var $df410cf7d5f8b9de$export$2e2bcd8739ae039 = /*#__PURE__*/ function() {
                     }
                 } else {
                     // different x cell (possibly with some columns in between)
-                    this.connectCells(pointerData, {
+                    var _this_connectCells = (0, ($parcel$interopDefault($49SJR$swchelperslib_sliced_to_arrayjs)))(this.connectCells(pointerData, {
                         cellX: cellX,
                         cellY: cellY
-                    });
-                    if (prevCellX !== -1 && cellX !== -1) {
+                    }), 2), previousSegmentIndex = _this_connectCells[0], segmentIndex = _this_connectCells[1];
+                    console.log(prevCellX, previousSegmentIndex, cellX, segmentIndex);
+                    if (prevCellX !== -1 && cellX !== -1 && previousSegmentIndex !== segmentIndex) {
                         if (prevCellX < cellX) segments.splitAfter(cellX);
                         else segments.splitBefore(cellX);
                     }

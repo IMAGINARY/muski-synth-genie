@@ -23,11 +23,11 @@ $parcel$export($450629445fe8fa68$exports, "default", function () { return $45062
 
 
 
-var $2716f4eb290e46b5$exports = {};
+var $1cf11a7bc80fe21b$exports = {};
 
-$parcel$export($2716f4eb290e46b5$exports, "pane", function () { return $2716f4eb290e46b5$export$6dff30574f79a202; }, function (v) { return $2716f4eb290e46b5$export$6dff30574f79a202 = v; });
-var $2716f4eb290e46b5$export$6dff30574f79a202;
-$2716f4eb290e46b5$export$6dff30574f79a202 = `fWQdYq_pane`;
+$parcel$export($1cf11a7bc80fe21b$exports, "pane", function () { return $1cf11a7bc80fe21b$export$6dff30574f79a202; }, function (v) { return $1cf11a7bc80fe21b$export$6dff30574f79a202 = v; });
+var $1cf11a7bc80fe21b$export$6dff30574f79a202;
+$1cf11a7bc80fe21b$export$6dff30574f79a202 = `FC48wq_pane`;
 
 
 function $12f1dd3205f197c4$export$79263550b33b988b(pe, elem) {
@@ -459,11 +459,12 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
             }
         } else {
             // different x cell (possibly with some columns in between)
-            this.connectCells(pointerData, {
+            const [previousSegmentIndex, segmentIndex] = this.connectCells(pointerData, {
                 cellX: cellX,
                 cellY: cellY
             });
-            if (prevCellX !== -1 && cellX !== -1) {
+            console.log(prevCellX, previousSegmentIndex, cellX, segmentIndex);
+            if (prevCellX !== -1 && cellX !== -1 && previousSegmentIndex !== segmentIndex) {
                 if (prevCellX < cellX) segments.splitAfter(cellX);
                 else segments.splitBefore(cellX);
             }
@@ -697,7 +698,7 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         (0, $1xfY9$strict)(context !== null);
         const pane = document.createElement("div");
         pane.setAttribute("touch-action", "none"); // for Pointer Events Polyfill
-        pane.classList.add((0, (/*@__PURE__*/$parcel$interopDefault($2716f4eb290e46b5$exports))).pane);
+        pane.classList.add((0, (/*@__PURE__*/$parcel$interopDefault($1cf11a7bc80fe21b$exports))).pane);
         pane.addEventListener("pointerdown", this.handlers.addPointer);
         pane.addEventListener("pointerup", this.handlers.removePointer);
         pane.addEventListener("pointercancel", this.handlers.removePointer);
