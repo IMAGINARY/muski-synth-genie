@@ -64,40 +64,24 @@ const TEMPERATURE = 0.25;
 
 export type SynthGenieOptions = {
   resetStateOnLoop: boolean;
-
   sustainInSegments: boolean;
-
   slideInSegments: boolean;
-
   numBeats: number;
-
   mute: boolean;
-
   volume: number;
-
   pause: boolean;
-
   beatLength: number;
-
   relativeNoteLength: number;
-
   minMidiNote: number;
-
   maxMidiNote: number;
-
   showGrid: boolean;
-
   showBar: boolean;
-
   gridColor: string;
   barColor: string;
   activeCellColor: string;
   dotColor: string;
-
   relativeDotSize: number;
-
   lineColor: string;
-
   relativeLineWidth: number;
 };
 
