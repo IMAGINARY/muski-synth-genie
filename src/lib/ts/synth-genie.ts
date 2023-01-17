@@ -9,9 +9,6 @@ import Segments from './segments';
 
 tf.disableDeprecationWarnings();
 
-const PIANO_GENIE_CHECKPOINT =
-  'https://storage.googleapis.com/magentadata/js/checkpoints/piano_genie/model/epiano/stp_iq_auto_contour_dt_166006';
-
 const LOWEST_PIANO_KEY_MIDI_NOTE = 21;
 const NUM_BUTTONS = 8;
 
@@ -195,7 +192,11 @@ export default class SynthGenie<T extends Element> {
 
   protected repaintTimer: ReturnType<typeof setTimeout> | 0;
 
-  protected constructor(element: T, options: Partial<SynthGenieOptions> = {}) {
+  protected constructor(
+    element: T,
+    checkpoint: URL,
+    options: Partial<SynthGenieOptions> = {},
+  ) {
     const canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
@@ -221,7 +222,7 @@ export default class SynthGenie<T extends Element> {
 
     this.pointers = new Map();
 
-    this.genie = new PianoGenie(PIANO_GENIE_CHECKPOINT);
+    this.genie = new PianoGenie(checkpoint.href);
     this.gain = new Tone.Gain(1).toDestination();
 
     this.synthOptions = SYNTH_OPTIONS;
@@ -237,9 +238,10 @@ export default class SynthGenie<T extends Element> {
 
   static async create<T extends Element>(
     element: T,
+    checkpoint: URL,
     options: Partial<SynthGenieOptions> = {},
   ) {
-    const synthGenie = new SynthGenie<T>(element, options);
+    const synthGenie = new SynthGenie<T>(element, checkpoint, options);
     const pauseState = synthGenie.pause;
     // do not start playback before everything is initialized
     synthGenie.pause = true;

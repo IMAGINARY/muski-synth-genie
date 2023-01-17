@@ -49,12 +49,29 @@ const toneAttrNames = [...attrCoercionMap.keys()].map(
 );
 const attrNames = [...thereminAttrNames, ...toneAttrNames];
 
+function getCheckpointUrl(e: HTMLElement): URL {
+  const errorMsgExt =
+    'must contain URL to the PianoGenie TensorFlow model checkpoint';
+  const checkpoint = e.getAttribute('data-checkpoint');
+  if (checkpoint === null)
+    throw new Error(`data-checkpoint attribute missing (${errorMsgExt})`);
+
+  try {
+    return new URL(checkpoint, window.location.href);
+  } catch (_) {
+    throw new Error(
+      `data-checkpoint attribute contains invalid URL (${errorMsgExt})`,
+    );
+  }
+}
+
 async function initMuskiSynthGenieComponentNoCheck<T extends HTMLElement>(
   e: T,
 ): Promise<SynthGenie<T>> {
   const m = migrateDataAttribute;
 
-  const synthGenie = await SynthGenie.create(e, {});
+  const checkpoint = getCheckpointUrl(e);
+  const synthGenie = await SynthGenie.create(e, checkpoint, {});
 
   const o: Partial<SynthGenieOptions> = {};
   [...attrCoercionMap.entries()].forEach(([attr, coerce]) =>
@@ -99,7 +116,7 @@ async function initMuskiSynthGenieComponentNoCheck<T extends HTMLElement>(
     attributeOldValue: true,
   });
 
-  const synthGenieClearObserver = new MutationObserver((mutations) => {
+  const synthGenieClearObserver = new MutationObserver(() => {
     if (e.hasAttribute('data-clear')) {
       synthGenie.clear();
       e.removeAttribute('data-clear');
