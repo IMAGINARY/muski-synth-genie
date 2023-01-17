@@ -4,7 +4,7 @@ import * as Tone from 'tone';
 import { strict as assert } from 'assert';
 
 import classes from '../scss/synth-genie.module.scss';
-import { getRelativePointerPosition, getCurvePoints } from './util';
+import { getRelativePointerPosition, getCurvePoints, clamp } from './util';
 import Segments from './segments';
 
 tf.disableDeprecationWarnings();
@@ -13,19 +13,8 @@ const PIANO_GENIE_CHECKPOINT =
   'https://storage.googleapis.com/magentadata/js/checkpoints/piano_genie/model/epiano/stp_iq_auto_contour_dt_166006';
 
 const LOWEST_PIANO_KEY_MIDI_NOTE = 21;
-const NUM_BEATS = 16;
 const NUM_BUTTONS = 8;
 
-const exponentialEnvelopeCurve: Tone.EnvelopeCurve = 'exponential';
-const envelopeOptions = {
-  attack: 0.01,
-  attackCurve: exponentialEnvelopeCurve,
-  decay: 0.01,
-  decayCurve: exponentialEnvelopeCurve,
-  release: 0.5,
-  releaseCurve: exponentialEnvelopeCurve,
-  sustain: 0.9,
-};
 const SYNTH_OPTIONS: ConstructorParameters<typeof Tone.AMSynth>[0] = {
   volume: 0,
   detune: 0,
@@ -62,12 +51,11 @@ const SYNTH_OPTIONS: ConstructorParameters<typeof Tone.AMSynth>[0] = {
 };
 
 function computeAllowedPianoKeys(minMidiNote: number, maxMidiNote: number) {
-  assert(minMidiNote < maxMidiNote);
+  assert(minMidiNote + 2 <= maxMidiNote);
   const keyMin = Math.max(0, minMidiNote - LOWEST_PIANO_KEY_MIDI_NOTE);
   const maxKey = Math.min(maxMidiNote - LOWEST_PIANO_KEY_MIDI_NOTE, 88 - 1);
   const numKeys = Math.max(0, maxKey - keyMin + 1);
   const keys = new Array(numKeys).fill(0).map((_, i) => keyMin + i);
-  console.log(keys);
   return keys;
 }
 
@@ -76,9 +64,65 @@ const TEMPERATURE = 0.25;
 const CANVAS_WIDTH = 512;
 const CANVAS_HEIGHT = 256;
 
-export type SynthGenieOptions = Record<string, unknown>;
+export type SynthGenieOptions = {
+  resetStateOnLoop: boolean;
 
-const defaultOptions: Readonly<SynthGenieOptions> = {};
+  sustainInSegments: boolean;
+
+  slideInSegments: boolean;
+
+  numBeats: number;
+
+  volume: number;
+
+  beatLength: number;
+
+  relativeNoteLength: number;
+
+  minMidiNote: number;
+
+  maxMidiNote: number;
+
+  showGrid: boolean;
+
+  showBar: boolean;
+
+  dotColor: string;
+
+  relativeDotSize: number;
+
+  lineColor: string;
+
+  relativeLineWidth: number;
+};
+
+const defaultOptions: Readonly<SynthGenieOptions> = {
+  resetStateOnLoop: true,
+
+  sustainInSegments: true,
+
+  slideInSegments: false,
+
+  numBeats: 16,
+
+  volume: 0.75,
+
+  beatLength: 240,
+
+  relativeNoteLength: 0.9,
+
+  minMidiNote: 21,
+
+  maxMidiNote: 108,
+
+  showGrid: false,
+
+  showBar: false,
+  dotColor: '#2c2c2c',
+  relativeDotSize: 0.0,
+  lineColor: '#2c2c2c',
+  relativeLineWidth: 0.6,
+};
 
 type RenderingContext2D =
   | CanvasRenderingContext2D
@@ -90,11 +134,9 @@ type CellData = {
 };
 
 export default class SynthGenie {
-  protected readonly _options: SynthGenieOptions;
-
   protected handlers = this.getHandlers();
 
-  protected element: Element;
+  public readonly element: Element;
 
   protected pane: HTMLDivElement;
 
@@ -104,45 +146,45 @@ export default class SynthGenie {
 
   protected context: RenderingContext2D;
 
-  protected segments: Segments<number>;
+  protected segments: Segments<number> = new Segments(1, () => -1);
 
-  protected numNotes: number;
-
-  protected position: number;
-
-  protected loopCount: number;
+  protected _position = 0;
 
   protected genie: PianoGenie;
 
+  protected _volume = 0;
+
+  protected _mute = false;
+
   protected gain: Tone.Gain;
 
-  protected beatLength: number;
+  protected _beatLength: number = defaultOptions.beatLength;
 
-  protected relativeNoteLength: number;
+  protected _relativeNoteLength: number = defaultOptions.relativeNoteLength;
 
-  protected minMidiNote: number;
+  protected _minMidiNote: number = defaultOptions.minMidiNote;
 
-  protected maxMidiNote: number;
+  protected _maxMidiNote: number = defaultOptions.maxMidiNote;
 
-  protected allowedPianoKeys: number[];
+  protected allowedPianoKeys: number[] = [];
 
-  protected resetStateOnLoop: boolean;
+  public resetStateOnLoop: boolean = defaultOptions.resetStateOnLoop;
 
-  protected sustainInSegments: boolean;
+  public sustainInSegments: boolean = defaultOptions.sustainInSegments;
 
-  protected slideInSegments: boolean;
+  public slideInSegments: boolean = defaultOptions.slideInSegments;
 
-  protected showGrid: boolean;
+  protected _showGrid: boolean = defaultOptions.showGrid;
 
-  protected showBar: boolean;
+  protected _showBar: boolean = defaultOptions.showBar;
 
-  protected dotColor: string;
+  protected _dotColor: string = defaultOptions.dotColor;
 
-  protected relativeDotSize: number;
+  protected _relativeDotSize: number = defaultOptions.relativeDotSize;
 
-  protected lineColor: string;
+  protected _lineColor: string = defaultOptions.lineColor;
 
-  protected relativeLineWidth: number;
+  protected _relativeLineWidth: number = defaultOptions.relativeLineWidth;
 
   protected synthOptions: ConstructorParameters<typeof Tone.AMSynth>[0];
 
@@ -150,38 +192,14 @@ export default class SynthGenie {
 
   protected synth: Tone.AMSynth | null;
 
-  protected timer: ReturnType<typeof setInterval> | 0;
+  protected beatTimer: ReturnType<typeof setInterval> | 0;
+
+  protected repaintTimer: ReturnType<typeof setTimeout> | 0;
 
   protected constructor(
     element: Element,
     options: Partial<SynthGenieOptions> = {},
   ) {
-    console.log('Starting');
-    this._options = { ...defaultOptions, ...options };
-
-    this.numNotes = NUM_BEATS;
-    this.segments = new Segments(this.numNotes, () => -1);
-    this.position = 0;
-    this.loopCount = 0;
-    this.resetStateOnLoop = true;
-    this.sustainInSegments = true;
-    this.slideInSegments = true;
-    this.showGrid = true;
-    this.showBar = true;
-    this.beatLength = 250;
-    this.relativeNoteLength = 1.0;
-    this.minMidiNote = 21;
-    this.maxMidiNote = 21 + 88 - 1;
-    this.dotColor = '#2c2c2c';
-    this.relativeDotSize = 0.0;
-    this.lineColor = '#2c2c2c';
-    this.relativeLineWidth = 0.6;
-    this.allowedPianoKeys = computeAllowedPianoKeys(
-      this.minMidiNote,
-      this.maxMidiNote,
-    );
-    console.log('Starting 2');
-
     const canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
@@ -213,9 +231,13 @@ export default class SynthGenie {
     this.synthOptions = SYNTH_OPTIONS;
     this.synthPool = [];
     this.synth = null;
-    this.timer = 0;
+    this.beatTimer = 0;
+    this.repaintTimer = 0;
 
-    this.updateGrid();
+    Object.assign(this, options);
+
+    this.updateAllowedPianoKeys();
+    this.repaint();
   }
 
   static async create(
@@ -227,20 +249,150 @@ export default class SynthGenie {
     return synthGenie;
   }
 
+  get numBeats(): number {
+    return this.segments.size;
+  }
+
+  set numBeats(b: number) {
+    this.segments.resize(Math.max(1, Math.floor(b)));
+  }
+
+  get position(): number {
+    return this._position;
+  }
+
+  set position(p: number) {
+    this._position = clamp(Math.floor(p), 0, this.segments.size - 1);
+  }
+
+  protected updateGain() {
+    this.gain.gain.linearRampTo(this.mute ? 0 : this.volume, 0.1);
+  }
+
+  get mute(): boolean {
+    return this._mute;
+  }
+
+  set mute(m: boolean) {
+    this._mute = m;
+    this.updateGain();
+  }
+
+  get volume(): number {
+    return this.gain.gain.value;
+  }
+
+  set volume(v: number) {
+    this._volume = Math.max(0, v);
+    this.updateGain();
+  }
+
+  get beatLength(): number {
+    return this._beatLength;
+  }
+
+  set beatLength(l: number) {
+    const wasPlaying = this.isPlaying();
+    this.pause();
+    this._beatLength = Math.max(0, l);
+    if (wasPlaying) this.play();
+  }
+
+  get relativeNoteLength(): number {
+    return this._relativeNoteLength;
+  }
+
+  set relativeNoteLength(l: number) {
+    this._relativeNoteLength = Math.max(0, l);
+  }
+
+  get minMidiNote(): number {
+    return this._minMidiNote;
+  }
+
+  set minMidiNote(n: number) {
+    this._minMidiNote = clamp(n, 0, 127 - 2);
+    this._maxMidiNote = Math.max(this._minMidiNote + 2, this._maxMidiNote);
+    this.updateAllowedPianoKeys();
+  }
+
+  get maxMidiNote(): number {
+    return this._maxMidiNote;
+  }
+
+  set maxMidiNote(n: number) {
+    this._maxMidiNote = clamp(n, 2, 127);
+    this._minMidiNote = Math.min(this._minMidiNote, this._maxMidiNote - 2);
+    this.updateAllowedPianoKeys();
+  }
+
+  get showGrid(): boolean {
+    return this._showGrid;
+  }
+
+  set showGrid(val: boolean) {
+    this._showGrid = val;
+    this.scheduleRepaint();
+  }
+
+  get showBar(): boolean {
+    return this._showBar;
+  }
+
+  set showBar(val: boolean) {
+    this._showBar = val;
+    this.scheduleRepaint();
+  }
+
+  get dotColor(): string {
+    return this._dotColor;
+  }
+
+  set dotColor(c: string) {
+    this._dotColor = c;
+    this.scheduleRepaint();
+  }
+
+  get relativeDotSize(): number {
+    return this._relativeDotSize;
+  }
+
+  set relativeDotSize(s: number) {
+    this._relativeDotSize = Math.max(0, s);
+    this.scheduleRepaint();
+  }
+
+  get lineColor(): string {
+    return this._lineColor;
+  }
+
+  set lineColor(c: string) {
+    this._lineColor = c;
+    this.scheduleRepaint();
+  }
+
+  get relativeLineWidth(): number {
+    return this._relativeLineWidth;
+  }
+
+  set relativeLineWidth(w: number) {
+    this._relativeLineWidth = Math.max(0, w);
+    this.scheduleRepaint();
+  }
+
   play() {
-    if (this.timer === 0) {
-      const { beatLength } = this;
-      this.timer = setTimeout(() => {
-        this.timer = setInterval(() => this.playBeat(), beatLength);
+    if (this.beatTimer === 0) {
+      this.beatTimer = setTimeout(() => {
+        this.beatTimer = setInterval(() => this.playBeat(), this.beatLength);
       }, 0);
     }
   }
 
   pause() {
-    if (this.timer !== 0) {
-      clearTimeout(this.timer);
-      clearInterval(this.timer);
-      this.timer = 0;
+    if (this.beatTimer !== 0) {
+      clearTimeout(this.beatTimer);
+      clearInterval(this.beatTimer);
+      this.beatTimer = 0;
       if (this.synth !== null) {
         this.releaseAndFreeSynth(this.synth, 0);
         this.synth = null;
@@ -249,14 +401,19 @@ export default class SynthGenie {
   }
 
   isPlaying() {
-    return this.timer !== 0;
+    return this.beatTimer !== 0;
   }
 
   protected playBeat() {
     const { genie } = this;
 
+    if (this._position >= this.segments.size) {
+      this._position = 0;
+      if (this.resetStateOnLoop) genie.resetState();
+    }
+
     const { segment, indexInSegment } = this.segments.getSegmentOf(
-      this.position,
+      this._position,
     );
     const cell = segment[indexInSegment];
     assert(typeof cell !== 'undefined');
@@ -277,7 +434,7 @@ export default class SynthGenie {
 
       this.synth = this.synth ?? this.synthPool.pop() ?? this.createSynth();
 
-      const noteDuration = (this.beatLength * this.relativeNoteLength) / 1000;
+      const noteDuration = (this._beatLength * this._relativeNoteLength) / 1000;
 
       if (attack || !this.slideInSegments) {
         // attack
@@ -293,14 +450,9 @@ export default class SynthGenie {
       }
     }
 
-    this.updateGrid();
+    this.repaint();
 
-    this.position += 1;
-    if (this.position === this.segments.size) {
-      this.position = 0;
-      this.loopCount += 1;
-      if (this.resetStateOnLoop) genie.resetState();
-    }
+    this._position += 1;
   }
 
   createSynth() {
@@ -334,14 +486,6 @@ export default class SynthGenie {
     this.play();
   }
 
-  getOptions() {
-    return { ...this._options };
-  }
-
-  applyOptions(o: Partial<SynthGenieOptions>) {
-    Object.assign(this._options, o);
-  }
-
   protected getHandlers() {
     return {
       addPointer: this.addPointer.bind(this),
@@ -351,7 +495,7 @@ export default class SynthGenie {
   }
 
   getCellCoordinates(relX: number, relY: number) {
-    const cellX = Math.floor(relX * this.numNotes);
+    const cellX = Math.floor(relX * this.numBeats);
     const cellY = Math.floor(relY * NUM_BUTTONS);
     return { cellX, cellY };
   }
@@ -369,13 +513,13 @@ export default class SynthGenie {
     segments.isolate(cellX);
     segments.set(cellX, cellY);
 
-    this.updateGrid();
+    this.repaint();
   }
 
   protected updateAllowedPianoKeys() {
     this.allowedPianoKeys = computeAllowedPianoKeys(
-      this.minMidiNote,
-      this.maxMidiNote,
+      this._minMidiNote,
+      this._maxMidiNote,
     );
   }
 
@@ -404,7 +548,7 @@ export default class SynthGenie {
           // within y range
           segments.set(cellX, cellY);
         }
-        this.updateGrid();
+        this.repaint();
       }
     } else {
       // different x cell (possibly with some columns in between)
@@ -423,7 +567,7 @@ export default class SynthGenie {
           segments.splitBefore(cellX);
         }
       }
-      this.updateGrid();
+      this.repaint();
     }
   }
 
@@ -469,17 +613,33 @@ export default class SynthGenie {
       this.pane.removeEventListener('pointermove', this.handlers.updatePointer);
   }
 
-  protected updateGrid() {
+  public clear() {
+    this.segments.set(0, ...Array<number>(this.segments.size).fill(-1));
+    this._position = 0;
+    this.repaint();
+    this.genie.resetState();
+  }
+
+  public repaint() {
     this.context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    if (this.showBar) {
+    if (this._showBar) {
       this.paintBar();
     }
-    if (this.showGrid) {
+    if (this._showGrid) {
       this.paintCells();
       this.paintGrid();
     }
 
     this.paintSegments();
+  }
+
+  public scheduleRepaint() {
+    if (this.repaintTimer !== 0) {
+      this.repaintTimer = setTimeout(() => {
+        this.repaintTimer = 0;
+        this.repaint();
+      }, 0);
+    }
   }
 
   protected paintSegments() {
@@ -614,8 +774,8 @@ export default class SynthGenie {
 
     context.save();
     context.fillStyle = 'rgba(211,211,211,0.4)';
-    const stepX = CANVAS_WIDTH / this.numNotes;
-    const x = stepX * this.position;
+    const stepX = CANVAS_WIDTH / this.numBeats;
+    const x = stepX * this._position;
     context.fillRect(x, 0, stepX, CANVAS_WIDTH);
     context.restore();
   }
