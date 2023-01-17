@@ -71,6 +71,7 @@ async function initMuskiSynthGenieComponentNoCheck<T extends HTMLElement>(
   const m = migrateDataAttribute;
 
   const checkpoint = getCheckpointUrl(e);
+
   const synthGenie = await SynthGenie.create(e, checkpoint, {});
 
   const o: Partial<SynthGenieOptions> = {};
@@ -139,13 +140,28 @@ const muskiSynthGenieComponents = new Map<
   SynthGenie<HTMLElement>
 >();
 
+const muskiSynthGenieComponentsInitializing = new Map<
+  HTMLElement,
+  Promise<SynthGenie<HTMLElement>>
+>();
+
 async function initMuskiSynthGenieComponent<T extends HTMLElement>(
   e: T,
 ): Promise<SynthGenie<T>> {
-  return (
-    (muskiSynthGenieComponents.get(e) as SynthGenie<T>) ??
-    (await initMuskiSynthGenieComponentNoCheck<T>(e))
-  );
+  // Possibly return already initialized SynthGenie for the element
+  const existingSynthGenie = muskiSynthGenieComponents.get(e) as SynthGenie<T>;
+  if (typeof existingSynthGenie !== 'undefined') return existingSynthGenie;
+
+  // Possibly return still initializing SynthGenie for the element
+  const initializingGenie = muskiSynthGenieComponentsInitializing.get(
+    e,
+  ) as Promise<SynthGenie<T>>;
+  if (typeof initializingGenie !== 'undefined') return initializingGenie;
+
+  // We need to create a new SynthGenie for this element
+  const synthGeniePromise = initMuskiSynthGenieComponentNoCheck<T>(e);
+  muskiSynthGenieComponentsInitializing.set(e, synthGeniePromise);
+  return synthGeniePromise;
 }
 
 async function initMuskiSynthGenieComponents(): Promise<
@@ -156,22 +172,14 @@ async function initMuskiSynthGenieComponents(): Promise<
       '*[data-component="muski-synth-genie"]',
     ),
   ];
-  const uninitializedElements = elements.filter(
-    (e) => !muskiSynthGenieComponents.has(e),
-  );
 
   const initResults = await Promise.allSettled(
-    uninitializedElements.map(initMuskiSynthGenieComponentNoCheck),
+    elements.map(initMuskiSynthGenieComponent),
   );
 
   const rejected = initResults.filter(isRejected);
   // eslint-disable-next-line no-console
   rejected.forEach(({ reason }) => console.error(reason));
-
-  const fulfilled = initResults.filter(isFulfilled);
-  fulfilled.forEach(({ value }) =>
-    muskiSynthGenieComponents.set(value.element, value),
-  );
 
   return [...muskiSynthGenieComponents.values()];
 }

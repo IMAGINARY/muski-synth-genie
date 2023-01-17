@@ -198,6 +198,8 @@ export default class SynthGenie<T extends Element> {
     height: 0,
   };
 
+  protected initPromise: Promise<void> | null = null;
+
   protected constructor(
     element: T,
     checkpoint: URL,
@@ -227,7 +229,6 @@ export default class SynthGenie<T extends Element> {
     this.context = context;
     const resizeObserver = new ResizeObserver((entries) => {
       entries.forEach((entry) => {
-        console.log(entry);
         const { width, height } = entry.contentRect;
         this.canvasTargetSize = { width, height };
         this.scheduleRepaint();
@@ -256,10 +257,12 @@ export default class SynthGenie<T extends Element> {
     checkpoint: URL,
     options: Partial<SynthGenieOptions> = {},
   ) {
-    const synthGenie = new SynthGenie<T>(element, checkpoint, options);
-    const pauseState = synthGenie.pause;
     // do not start playback before everything is initialized
-    synthGenie.pause = true;
+    const pauseState = options.pause ?? defaultOptions.pause;
+    const synthGenie = new SynthGenie<T>(element, checkpoint, {
+      ...options,
+      pause: true,
+    });
     await synthGenie.init();
     synthGenie.pause = pauseState;
 
@@ -506,10 +509,14 @@ export default class SynthGenie<T extends Element> {
     return frequency;
   }
 
-  async init() {
-    const { genie } = this;
-    await genie.initialize();
-    console.log('🧞‍♀️ ready!');
+  protected async init() {
+    if (this.initPromise !== null) {
+      await this.initPromise;
+    } else {
+      const { genie } = this;
+      await genie.initialize();
+      console.log('🧞‍♀️ ready!');
+    }
   }
 
   protected getHandlers() {
