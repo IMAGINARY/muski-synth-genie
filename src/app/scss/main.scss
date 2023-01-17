@@ -7,10 +7,15 @@ body {
   overflow: hidden;
 }
 
+$synth-genie-width: calc(16 * 32px + 15 * 1px);
+$synth-genie-height: calc(8 * 32px + 7 * 1px);
+
 #synth-genie-wrapper {
   position: relative;
-  width: calc(512px + 2px);
-  height: calc(256px + 2px);
+  width: $synth-genie-width;
+  height: $synth-genie-height;
+  border: 1px solid gray;
+  box-sizing: content-box;
   resize: both;
   overflow: hidden;
 }
@@ -27,5 +32,5 @@ body {
 #note-length-slider,
 #min-midi-note-slider,
 #max-midi-note-slider {
-  width: 512px;
+  width: $synth-genie-width;
 }
