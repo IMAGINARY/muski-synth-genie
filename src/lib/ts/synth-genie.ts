@@ -412,7 +412,7 @@ export default class SynthGenie<T extends Element> {
   }
 
   get pause(): boolean {
-    return this.beatTimer !== 0;
+    return this.beatTimer === 0;
   }
 
   set pause(pause: boolean) {
