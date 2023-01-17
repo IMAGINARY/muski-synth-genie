@@ -89,6 +89,9 @@ export type SynthGenieOptions = {
 
   showBar: boolean;
 
+  gridColor: string;
+  barColor: string;
+  activeCellColor: string;
   dotColor: string;
 
   relativeDotSize: number;
@@ -112,6 +115,9 @@ const defaultOptions: Readonly<SynthGenieOptions> = {
   maxMidiNote: 108,
   showGrid: false,
   showBar: false,
+  gridColor: '#b3b2b2',
+  barColor: 'rgba(211,211,211,0.4)',
+  activeCellColor: '#b3b2b2',
   dotColor: '#2c2c2c',
   relativeDotSize: 0.0,
   lineColor: '#2c2c2c',
@@ -174,6 +180,12 @@ export default class SynthGenie<T extends Element> {
   protected _showGrid: boolean = defaultOptions.showGrid;
 
   protected _showBar: boolean = defaultOptions.showBar;
+
+  protected _gridColor: string = defaultOptions.gridColor;
+
+  protected _barColor: string = defaultOptions.barColor;
+
+  protected _activeCellColor: string = defaultOptions.activeCellColor;
 
   protected _dotColor: string = defaultOptions.dotColor;
 
@@ -363,6 +375,33 @@ export default class SynthGenie<T extends Element> {
 
   set showBar(val: boolean) {
     this._showBar = val;
+    this.scheduleRepaint();
+  }
+
+  get gridColor(): string {
+    return this._gridColor;
+  }
+
+  set gridColor(c: string) {
+    this._gridColor = c;
+    this.scheduleRepaint();
+  }
+
+  get barColor(): string {
+    return this._barColor;
+  }
+
+  set barColor(c: string) {
+    this._barColor = c;
+    this.scheduleRepaint();
+  }
+
+  get activeCellColor(): string {
+    return this._activeCellColor;
+  }
+
+  set activeCellColor(c: string) {
+    this._activeCellColor = c;
     this.scheduleRepaint();
   }
 
@@ -666,7 +705,7 @@ export default class SynthGenie<T extends Element> {
     if (canvas.height !== canvasTargetSize.height)
       canvas.height = canvasTargetSize.height;
 
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this._showBar) {
       this.paintBar();
     }
@@ -766,7 +805,7 @@ export default class SynthGenie<T extends Element> {
 
     context.save();
     context.beginPath();
-    context.strokeStyle = '#b3b2b2';
+    context.strokeStyle = this.gridColor;
     const stepX = canvas.width / segments.size;
     for (let i = 1; i < segments.size; i += 1) {
       const x = stepX * i;
@@ -789,7 +828,7 @@ export default class SynthGenie<T extends Element> {
 
     context.save();
     context.beginPath();
-    context.fillStyle = '#b3b2b2';
+    context.fillStyle = this.activeCellColor;
     const stepX = canvas.width / segments.size;
     const stepY = canvas.height / NUM_BUTTONS;
     let cellX = 0;
@@ -815,7 +854,7 @@ export default class SynthGenie<T extends Element> {
     const { canvas, context } = this;
 
     context.save();
-    context.fillStyle = 'rgba(211,211,211,0.4)';
+    context.fillStyle = this.barColor;
     const stepX = canvas.width / this.numBeats;
     const x = stepX * this._position;
     context.fillRect(x, 0, stepX, canvas.height);
