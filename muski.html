@@ -22,6 +22,20 @@
         height: 100%;
         overflow: hidden;
       }
+
+      #play-pause-button[data-state='paused'] > .playing {
+        display: none;
+      }
+      #play-pause-button[data-state='playing'] > .paused {
+        display: none;
+      }
+
+      #mute-unmute-button[data-state='muted'] > .unmuted {
+        display: none;
+      }
+      #mute-unmute-button[data-state='unmuted'] > .muted {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -33,6 +47,43 @@
         data-show-bar
       ></div>
     </div>
+    <button id="play-pause-button" data-state="playing">
+      <span class="playing">Pause</span><span class="paused">Play</span>
+    </button>
+    <button id="mute-unmute-button" data-state="unmuted">
+      <span class="muted">Unmute</span><span class="unmuted">Mute</span>
+    </button>
+    <button id="clear-button">Clear</button>
     <script src="dist/muski-synth-genie.min.js"></script>
+    <script>
+      const synthGenieElement = document.getElementById('muski-synth-genie');
+
+      const playPauseButton = document.getElementById('play-pause-button');
+      playPauseButton.addEventListener('click', () => {
+        if (synthGenieElement.hasAttribute('data-pause')) {
+          synthGenieElement.removeAttribute('data-pause');
+          playPauseButton.dataset.state = 'playing';
+        } else {
+          synthGenieElement.setAttribute('data-pause', '');
+          playPauseButton.dataset.state = 'paused';
+        }
+      });
+
+      const muteUnmuteButton = document.getElementById('mute-unmute-button');
+      muteUnmuteButton.addEventListener('click', () => {
+        if (synthGenieElement.hasAttribute('data-mute')) {
+          synthGenieElement.removeAttribute('data-mute');
+          muteUnmuteButton.dataset.state = 'unmuted';
+        } else {
+          synthGenieElement.setAttribute('data-mute', '');
+          muteUnmuteButton.dataset.state = 'muted';
+        }
+      });
+
+      const clearButton = document.getElementById('clear-button');
+      clearButton.addEventListener('click', () =>
+        synthGenieElement.setAttribute('data-clear', ''),
+      );
+    </script>
   </body>
 </html>
