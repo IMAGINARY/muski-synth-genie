@@ -272,6 +272,7 @@ export default class SynthGenie<T extends Element> {
 
   set numBeats(b: number) {
     this.segments.resize(Math.max(1, Math.floor(b)));
+    this.scheduleRepaint();
   }
 
   get position(): number {
@@ -280,6 +281,7 @@ export default class SynthGenie<T extends Element> {
 
   set position(p: number) {
     this._position = clamp(Math.floor(p), 0, this.segments.size - 1);
+    this.scheduleRepaint();
   }
 
   protected updateGain() {
@@ -434,6 +436,7 @@ export default class SynthGenie<T extends Element> {
   protected playBeat() {
     const { genie } = this;
 
+    this._position += 1;
     if (this._position >= this.segments.size) {
       this._position = 0;
       if (this.resetStateOnLoop) genie.resetState();
@@ -478,8 +481,6 @@ export default class SynthGenie<T extends Element> {
     }
 
     this.repaint();
-
-    this._position += 1;
   }
 
   createSynth() {
