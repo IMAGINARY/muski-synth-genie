@@ -17,7 +17,16 @@
     "node": ">=16.0.0"
   },
   "browserslist": [
-    "> 0.2% and not dead and not OperaMini all"
+    ">= 0.5%",
+    "last 2 major versions",
+    "not dead",
+    "Chrome >= 60",
+    "Firefox >= 60",
+    "Firefox ESR",
+    "iOS >= 12",
+    "Safari >= 12",
+    "not Explorer <= 11",
+    "not OperaMini all"
   ],
   "source": "src/lib/ts/index.ts",
   "main": "dist/index.js",
