@@ -1,8 +1,9 @@
 import "./index.css";
-import $1xfY9$swchelperssrc_define_propertymjs from "@swc/helpers/src/_define_property.mjs";
-import {tf as $1xfY9$tf, PianoGenie as $1xfY9$PianoGenie} from "@magenta/music";
-import {AMSynth as $1xfY9$AMSynth, now as $1xfY9$now, Time as $1xfY9$Time, Frequency as $1xfY9$Frequency, Gain as $1xfY9$Gain} from "tone";
-import {strict as $1xfY9$strict} from "assert";
+import $6GFVM$swchelperssrc_define_propertymjs from "@swc/helpers/src/_define_property.mjs";
+import {tf as $6GFVM$tf, PianoGenie as $6GFVM$PianoGenie} from "@magenta/music";
+import {AMSynth as $6GFVM$AMSynth, now as $6GFVM$now, Time as $6GFVM$Time, Frequency as $6GFVM$Frequency, Gain as $6GFVM$Gain} from "tone";
+import {ResizeObserver as $6GFVM$ResizeObserver} from "@juggle/resize-observer";
+import {strict as $6GFVM$strict} from "assert";
 
 function $parcel$interopDefault(a) {
   return a && a.__esModule ? a.default : a;
@@ -13,24 +14,25 @@ function $parcel$defineInteropFlag(a) {
 function $parcel$export(e, n, v, s) {
   Object.defineProperty(e, n, {get: v, set: s, enumerable: true, configurable: true});
 }
-var $450629445fe8fa68$exports = {};
+var $ac42edad4610f0cf$exports = {};
 
-$parcel$defineInteropFlag($450629445fe8fa68$exports);
+$parcel$defineInteropFlag($ac42edad4610f0cf$exports);
 
-$parcel$export($450629445fe8fa68$exports, "defaultOptions", function () { return $450629445fe8fa68$export$ba43bf67f3d48107; });
-$parcel$export($450629445fe8fa68$exports, "default", function () { return $450629445fe8fa68$export$2e2bcd8739ae039; });
+$parcel$export($ac42edad4610f0cf$exports, "defaultOptions", function () { return $ac42edad4610f0cf$export$ba43bf67f3d48107; });
+$parcel$export($ac42edad4610f0cf$exports, "default", function () { return $ac42edad4610f0cf$export$2e2bcd8739ae039; });
 /* eslint-disable no-console */ 
 
 
 
-var $1cf11a7bc80fe21b$exports = {};
 
-$parcel$export($1cf11a7bc80fe21b$exports, "pane", function () { return $1cf11a7bc80fe21b$export$6dff30574f79a202; }, function (v) { return $1cf11a7bc80fe21b$export$6dff30574f79a202 = v; });
-var $1cf11a7bc80fe21b$export$6dff30574f79a202;
-$1cf11a7bc80fe21b$export$6dff30574f79a202 = `FC48wq_pane`;
+var $0b227a8ac7910066$exports = {};
+
+$parcel$export($0b227a8ac7910066$exports, "pane", function () { return $0b227a8ac7910066$export$6dff30574f79a202; }, function (v) { return $0b227a8ac7910066$export$6dff30574f79a202 = v; });
+var $0b227a8ac7910066$export$6dff30574f79a202;
+$0b227a8ac7910066$export$6dff30574f79a202 = `FC48wq_pane`;
 
 
-function $12f1dd3205f197c4$export$79263550b33b988b(pe, elem) {
+function $826d2a65147a9c31$export$79263550b33b988b(pe, elem) {
     const { left: left , top: top , width: width , height: height  } = elem.getBoundingClientRect();
     const x = pe.clientX - left;
     const y = pe.clientY - top;
@@ -45,7 +47,7 @@ function $12f1dd3205f197c4$export$79263550b33b988b(pe, elem) {
         height: height
     };
 }
-function $12f1dd3205f197c4$export$cfd1427bc286eaca(points, tension = 0.5, isClosed = false, numOfSegments = 16) {
+function $826d2a65147a9c31$export$cfd1427bc286eaca(points, tension = 0.5, isClosed = false, numOfSegments = 16) {
     // convert to internal format
     const pts = new Array();
     points.forEach(({ x: x , y: y  })=>pts.push(x, y));
@@ -91,10 +93,13 @@ function $12f1dd3205f197c4$export$cfd1427bc286eaca(points, tension = 0.5, isClos
     }
     return res;
 }
+function $826d2a65147a9c31$export$7d15b64cf5a3a4c4(x, min, max) {
+    return Math.max(min, Math.min(x, max));
+}
 
 
 
-class $e64336d5251bab09$export$2e2bcd8739ae039 {
+class $87a0a6ceb46ed965$export$2e2bcd8739ae039 {
     get size() {
         return this._size;
     }
@@ -232,9 +237,9 @@ class $e64336d5251bab09$export$2e2bcd8739ae039 {
         }
     }
     constructor(size, defaultValueCallback){
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "segments", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "_size", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "defaultValueCallback", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "segments", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_size", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "defaultValueCallback", void 0);
         this.segments = [
             new Array(size).fill(undefined).map(defaultValueCallback)
         ];
@@ -244,22 +249,12 @@ class $e64336d5251bab09$export$2e2bcd8739ae039 {
 }
 
 
-(0, $1xfY9$tf).disableDeprecationWarnings();
-const $450629445fe8fa68$var$PIANO_GENIE_CHECKPOINT = "https://storage.googleapis.com/magentadata/js/checkpoints/piano_genie/model/epiano/stp_iq_auto_contour_dt_166006";
-const $450629445fe8fa68$var$LOWEST_PIANO_KEY_MIDI_NOTE = 21;
-const $450629445fe8fa68$var$NUM_BEATS = 16;
-const $450629445fe8fa68$var$NUM_BUTTONS = 8;
-const $450629445fe8fa68$var$exponentialEnvelopeCurve = "exponential";
-const $450629445fe8fa68$var$envelopeOptions = {
-    attack: 0.01,
-    attackCurve: $450629445fe8fa68$var$exponentialEnvelopeCurve,
-    decay: 0.01,
-    decayCurve: $450629445fe8fa68$var$exponentialEnvelopeCurve,
-    release: 0.5,
-    releaseCurve: $450629445fe8fa68$var$exponentialEnvelopeCurve,
-    sustain: 0.9
-};
-const $450629445fe8fa68$var$SYNTH_OPTIONS = {
+// eslint-disable-next-line compat/compat
+const $ac42edad4610f0cf$var$ResizeObserver = window.ResizeObserver || (0, $6GFVM$ResizeObserver);
+(0, $6GFVM$tf).disableDeprecationWarnings();
+const $ac42edad4610f0cf$var$LOWEST_PIANO_KEY_MIDI_NOTE = 21;
+const $ac42edad4610f0cf$var$NUM_BUTTONS = 8;
+const $ac42edad4610f0cf$var$SYNTH_OPTIONS = {
     volume: 0,
     detune: 0,
     portamento: 0,
@@ -293,52 +288,214 @@ const $450629445fe8fa68$var$SYNTH_OPTIONS = {
         sustain: 1
     }
 };
-function $450629445fe8fa68$var$computeAllowedPianoKeys(minMidiNote, maxMidiNote) {
-    (0, $1xfY9$strict)(minMidiNote < maxMidiNote);
-    const keyMin = Math.max(0, minMidiNote - $450629445fe8fa68$var$LOWEST_PIANO_KEY_MIDI_NOTE);
-    const maxKey = Math.min(maxMidiNote - $450629445fe8fa68$var$LOWEST_PIANO_KEY_MIDI_NOTE, 87);
+function $ac42edad4610f0cf$var$computeAllowedPianoKeys(minMidiNote, maxMidiNote) {
+    (0, $6GFVM$strict)(minMidiNote + 2 <= maxMidiNote);
+    const keyMin = Math.max(0, minMidiNote - $ac42edad4610f0cf$var$LOWEST_PIANO_KEY_MIDI_NOTE);
+    const maxKey = Math.min(maxMidiNote - $ac42edad4610f0cf$var$LOWEST_PIANO_KEY_MIDI_NOTE, 87);
     const numKeys = Math.max(0, maxKey - keyMin + 1);
     const keys = new Array(numKeys).fill(0).map((_, i)=>keyMin + i);
-    console.log(keys);
     return keys;
 }
-const $450629445fe8fa68$var$TEMPERATURE = 0.25;
-const $450629445fe8fa68$var$CANVAS_WIDTH = 512;
-const $450629445fe8fa68$var$CANVAS_HEIGHT = 256;
-const $450629445fe8fa68$export$ba43bf67f3d48107 = {};
-class $450629445fe8fa68$export$2e2bcd8739ae039 {
-    static async create(element, options = {}) {
-        const synthGenie = new $450629445fe8fa68$export$2e2bcd8739ae039(element, options);
+const $ac42edad4610f0cf$var$TEMPERATURE = 0.25;
+const $ac42edad4610f0cf$export$ba43bf67f3d48107 = {
+    resetStateOnLoop: true,
+    sustainInSegments: true,
+    slideInSegments: false,
+    numBeats: 16,
+    mute: false,
+    volume: 0.75,
+    pause: false,
+    beatLength: 240,
+    relativeNoteLength: 0.9,
+    minMidiNote: 21,
+    maxMidiNote: 108,
+    showGrid: false,
+    showBar: false,
+    gridColor: "#b3b2b2",
+    barColor: "rgba(211,211,211,0.4)",
+    activeCellColor: "#b3b2b2",
+    dotColor: "#2c2c2c",
+    relativeDotSize: 0.0,
+    lineColor: "#2c2c2c",
+    relativeLineWidth: 0.6
+};
+class $ac42edad4610f0cf$export$2e2bcd8739ae039 {
+    static async create(element, checkpoint, options = {}) {
+        var _options_pause;
+        // do not start playback before everything is initialized
+        const pauseState = (_options_pause = options.pause) !== null && _options_pause !== void 0 ? _options_pause : $ac42edad4610f0cf$export$ba43bf67f3d48107.pause;
+        const synthGenie = new $ac42edad4610f0cf$export$2e2bcd8739ae039(element, checkpoint, {
+            ...options,
+            pause: true
+        });
         await synthGenie.init();
+        synthGenie.pause = pauseState;
         return synthGenie;
     }
-    play() {
-        if (this.timer === 0) {
-            const { beatLength: beatLength  } = this;
-            this.timer = setTimeout(()=>{
-                this.timer = setInterval(()=>this.playBeat(), beatLength);
-            }, 0);
-        }
+    get numBeats() {
+        return this.segments.size;
     }
-    pause() {
-        if (this.timer !== 0) {
-            clearTimeout(this.timer);
-            clearInterval(this.timer);
-            this.timer = 0;
+    set numBeats(b) {
+        this.segments.resize(Math.max(1, Math.floor(b)));
+        this.scheduleRepaint();
+    }
+    get position() {
+        return this._position;
+    }
+    set position(p) {
+        this._position = (0, $826d2a65147a9c31$export$7d15b64cf5a3a4c4)(Math.floor(p), 0, this.segments.size - 1);
+        this.scheduleRepaint();
+    }
+    updateGain() {
+        this.gain.gain.linearRampTo(this.mute ? 0 : this.volume, 0.1);
+    }
+    get mute() {
+        return this._mute;
+    }
+    set mute(m) {
+        this._mute = m;
+        this.updateGain();
+    }
+    get volume() {
+        return this._volume;
+    }
+    set volume(v) {
+        this._volume = Math.max(0, v);
+        this.updateGain();
+    }
+    get beatLength() {
+        return this._beatLength;
+    }
+    set beatLength(l) {
+        const pauseState = this.pause;
+        this.pause = true;
+        this._beatLength = Math.max(0, l);
+        this.pause = pauseState;
+    }
+    get relativeNoteLength() {
+        return this._relativeNoteLength;
+    }
+    set relativeNoteLength(l) {
+        this._relativeNoteLength = Math.max(0, l);
+    }
+    get minMidiNote() {
+        return this._minMidiNote;
+    }
+    set minMidiNote(n) {
+        this._minMidiNote = (0, $826d2a65147a9c31$export$7d15b64cf5a3a4c4)(n, 0, 125);
+        this._maxMidiNote = Math.max(this._minMidiNote + 2, this._maxMidiNote);
+        this.updateAllowedPianoKeys();
+    }
+    get maxMidiNote() {
+        return this._maxMidiNote;
+    }
+    set maxMidiNote(n) {
+        this._maxMidiNote = (0, $826d2a65147a9c31$export$7d15b64cf5a3a4c4)(n, 2, 127);
+        this._minMidiNote = Math.min(this._minMidiNote, this._maxMidiNote - 2);
+        this.updateAllowedPianoKeys();
+    }
+    get showGrid() {
+        return this._showGrid;
+    }
+    set showGrid(val) {
+        this._showGrid = val;
+        this.scheduleRepaint();
+    }
+    get showBar() {
+        return this._showBar;
+    }
+    set showBar(val) {
+        this._showBar = val;
+        this.scheduleRepaint();
+    }
+    get gridColor() {
+        return this._gridColor;
+    }
+    set gridColor(c) {
+        this._gridColor = c;
+        this.scheduleRepaint();
+    }
+    get barColor() {
+        return this._barColor;
+    }
+    set barColor(c) {
+        this._barColor = c;
+        this.scheduleRepaint();
+    }
+    get activeCellColor() {
+        return this._activeCellColor;
+    }
+    set activeCellColor(c) {
+        this._activeCellColor = c;
+        this.scheduleRepaint();
+    }
+    get dotColor() {
+        return this._dotColor;
+    }
+    set dotColor(c) {
+        this._dotColor = c;
+        this.scheduleRepaint();
+    }
+    get relativeDotSize() {
+        return this._relativeDotSize;
+    }
+    set relativeDotSize(s) {
+        this._relativeDotSize = Math.max(0, s);
+        this.scheduleRepaint();
+    }
+    get lineColor() {
+        return this._lineColor;
+    }
+    set lineColor(c) {
+        this._lineColor = c;
+        this.scheduleRepaint();
+    }
+    get relativeLineWidth() {
+        return this._relativeLineWidth;
+    }
+    set relativeLineWidth(w) {
+        this._relativeLineWidth = Math.max(0, w);
+        this.scheduleRepaint();
+    }
+    get() {
+        return Object.fromEntries(// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        Object.keys($ac42edad4610f0cf$export$ba43bf67f3d48107).map((key)=>[
+                key,
+                this[key]
+            ]));
+    }
+    set(options) {
+        Object.assign(this, options);
+    }
+    get pause() {
+        return this.beatTimer === 0;
+    }
+    set pause(pause) {
+        if (pause && this.beatTimer !== 0) {
+            // pause
+            clearTimeout(this.beatTimer);
+            clearInterval(this.beatTimer);
+            this.beatTimer = 0;
             if (this.synth !== null) {
                 this.releaseAndFreeSynth(this.synth, 0);
                 this.synth = null;
             }
-        }
-    }
-    isPlaying() {
-        return this.timer !== 0;
+        } else if (!pause && this.beatTimer === 0) // play
+        this.beatTimer = setTimeout(()=>{
+            this.beatTimer = setInterval(()=>this.playBeat(), this.beatLength);
+        }, 0);
     }
     playBeat() {
         const { genie: genie  } = this;
-        const { segment: segment , indexInSegment: indexInSegment  } = this.segments.getSegmentOf(this.position);
+        this._position += 1;
+        if (this._position >= this.segments.size) {
+            this._position = 0;
+            if (this.resetStateOnLoop) genie.resetState();
+        }
+        const { segment: segment , indexInSegment: indexInSegment  } = this.segments.getSegmentOf(this._position);
         const cell = segment[indexInSegment];
-        (0, $1xfY9$strict)(typeof cell !== "undefined");
+        (0, $6GFVM$strict)(typeof cell !== "undefined");
         if (this.synth !== null && cell === -1) {
             // note still ringing, but shouldn't (grid values changed)
             this.releaseAndFreeSynth(this.synth, 0);
@@ -350,7 +507,7 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
             const release = indexInSegment === segment.length - 1 || !this.sustainInSegments;
             var _this_synth, _ref;
             this.synth = (_ref = (_this_synth = this.synth) !== null && _this_synth !== void 0 ? _this_synth : this.synthPool.pop()) !== null && _ref !== void 0 ? _ref : this.createSynth();
-            const noteDuration = this.beatLength * this.relativeNoteLength / 1000;
+            const noteDuration = this._beatLength * this._relativeNoteLength / 1000;
             if (attack || !this.slideInSegments) // attack
             this.synth.triggerAttack(frequency);
             else // ramp to next note frequency
@@ -361,43 +518,31 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
                 this.synth = null;
             }
         }
-        this.updateGrid();
-        this.position += 1;
-        if (this.position === this.segments.size) {
-            this.position = 0;
-            this.loopCount += 1;
-            if (this.resetStateOnLoop) genie.resetState();
-        }
+        this.repaint();
     }
     createSynth() {
-        return new $1xfY9$AMSynth(this.synthOptions).connect(this.gain);
+        return new $6GFVM$AMSynth(this.synthOptions).connect(this.gain);
     }
     releaseAndFreeSynth(synth, seconds) {
-        synth.triggerRelease($1xfY9$now() + seconds);
-        const releaseDuration = $1xfY9$Time(synth.envelope.release).toSeconds();
+        synth.triggerRelease($6GFVM$now() + seconds);
+        const releaseDuration = $6GFVM$Time(synth.envelope.release).toSeconds();
         const toneDuration = seconds + releaseDuration;
         setTimeout(()=>this.synthPool.push(synth), toneDuration * 1000);
     }
     getGenieFrequency(cell) {
-        const genieButton = $450629445fe8fa68$var$NUM_BUTTONS - 1 - cell;
-        const pianoKey = this.genie.nextFromKeyList(genieButton, this.allowedPianoKeys, $450629445fe8fa68$var$TEMPERATURE);
-        const midiNote = $450629445fe8fa68$var$LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
-        const frequency = $1xfY9$Frequency(midiNote, "midi").toFrequency();
+        const genieButton = $ac42edad4610f0cf$var$NUM_BUTTONS - 1 - cell;
+        const pianoKey = this.genie.nextFromKeyList(genieButton, this.allowedPianoKeys, $ac42edad4610f0cf$var$TEMPERATURE);
+        const midiNote = $ac42edad4610f0cf$var$LOWEST_PIANO_KEY_MIDI_NOTE + pianoKey;
+        const frequency = $6GFVM$Frequency(midiNote, "midi").toFrequency();
         return frequency;
     }
     async init() {
-        const { genie: genie  } = this;
-        await genie.initialize();
-        console.log("\uD83E\uDDDE‍♀️ ready!");
-        this.play();
-    }
-    getOptions() {
-        return {
-            ...this._options
-        };
-    }
-    applyOptions(o) {
-        Object.assign(this._options, o);
+        if (this.initPromise !== null) await this.initPromise;
+        else {
+            const { genie: genie  } = this;
+            await genie.initialize();
+            console.log("\uD83E\uDDDE‍♀️ ready!");
+        }
     }
     getHandlers() {
         return {
@@ -407,8 +552,8 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         };
     }
     getCellCoordinates(relX, relY) {
-        const cellX = Math.floor(relX * this.numNotes);
-        const cellY = Math.floor(relY * $450629445fe8fa68$var$NUM_BUTTONS);
+        const cellX = Math.floor(relX * this.numBeats);
+        const cellY = Math.floor(relY * $ac42edad4610f0cf$var$NUM_BUTTONS);
         return {
             cellX: cellX,
             cellY: cellY
@@ -418,7 +563,7 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         this.removePointer(pe);
         this.pane.addEventListener("pointermove", this.handlers.updatePointer);
         this.pane.setPointerCapture(pe.pointerId);
-        const { relX: relX , relY: relY  } = (0, $12f1dd3205f197c4$export$79263550b33b988b)(pe, this.pane);
+        const { relX: relX , relY: relY  } = (0, $826d2a65147a9c31$export$79263550b33b988b)(pe, this.pane);
         const { cellX: cellX , cellY: cellY  } = this.getCellCoordinates(relX, relY);
         this.pointers.set(pe.pointerId, {
             cellX: cellX,
@@ -427,17 +572,17 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         const { segments: segments  } = this;
         segments.isolate(cellX);
         segments.set(cellX, cellY);
-        this.updateGrid();
+        this.repaint();
     }
     updateAllowedPianoKeys() {
-        this.allowedPianoKeys = $450629445fe8fa68$var$computeAllowedPianoKeys(this.minMidiNote, this.maxMidiNote);
+        this.allowedPianoKeys = $ac42edad4610f0cf$var$computeAllowedPianoKeys(this._minMidiNote, this._maxMidiNote);
     }
     updatePointer(pe) {
         if (pe.buttons === 0) return;
         const id = pe.pointerId;
-        const { relX: relX , relY: relY  } = (0, $12f1dd3205f197c4$export$79263550b33b988b)(pe, this.pane);
+        const { relX: relX , relY: relY  } = (0, $826d2a65147a9c31$export$79263550b33b988b)(pe, this.pane);
         const pointerData = this.pointers.get(id);
-        (0, $1xfY9$strict)(typeof pointerData !== "undefined");
+        (0, $6GFVM$strict)(typeof pointerData !== "undefined");
         const { cellX: prevCellX , cellY: prevCellY  } = pointerData;
         const { cellX: cellX , cellY: cellY  } = this.getCellCoordinates(relX, relY);
         this.pointers.set(id, {
@@ -449,13 +594,13 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         {
             if (prevCellY !== cellY) {
                 // different y cell
-                if (cellY < 0 || cellY >= $450629445fe8fa68$var$NUM_BUTTONS) {
+                if (cellY < 0 || cellY >= $ac42edad4610f0cf$var$NUM_BUTTONS) {
                     // out of y range
                     segments.isolate(cellX);
                     segments.set(cellX, -1);
                 } else // within y range
                 segments.set(cellX, cellY);
-                this.updateGrid();
+                this.repaint();
             }
         } else {
             // different x cell (possibly with some columns in between)
@@ -463,12 +608,11 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
                 cellX: cellX,
                 cellY: cellY
             });
-            console.log(prevCellX, previousSegmentIndex, cellX, segmentIndex);
             if (prevCellX !== -1 && cellX !== -1 && previousSegmentIndex !== segmentIndex) {
                 if (prevCellX < cellX) segments.splitAfter(cellX);
                 else segments.splitBefore(cellX);
             }
-            this.updateGrid();
+            this.repaint();
         }
     }
     connectCells(first, second) {
@@ -488,7 +632,7 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         const clampedX1 = Math.min(segments.size - 1, Math.max(x1, 0));
         for(let x = clampedX0; x <= clampedX1; x += 1){
             const y = Math.floor(y0 + slope * (x - x0));
-            if (y < 0 || y >= $450629445fe8fa68$var$NUM_BUTTONS) {
+            if (y < 0 || y >= $ac42edad4610f0cf$var$NUM_BUTTONS) {
                 // make it possible to disable columns by dragging them out of the y range
                 segments.isolate(x);
                 segments.set(x, -1);
@@ -504,26 +648,42 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         this.pointers.delete(id);
         if (this.pointers.size === 0) this.pane.removeEventListener("pointermove", this.handlers.updatePointer);
     }
-    updateGrid() {
-        this.context.clearRect(0, 0, $450629445fe8fa68$var$CANVAS_WIDTH, $450629445fe8fa68$var$CANVAS_HEIGHT);
-        if (this.showBar) this.paintBar();
-        if (this.showGrid) {
+    clear() {
+        this.segments.set(0, ...Array(this.segments.size).fill(-1));
+        this._position = 0;
+        this.repaint();
+        this.genie.resetState();
+    }
+    repaint() {
+        if (this.repaintTimer !== 0) {
+            clearTimeout(this.repaintTimer);
+            this.repaintTimer = 0;
+        }
+        const { canvas: canvas , context: context , canvasTargetSize: canvasTargetSize  } = this;
+        if (canvas.width !== canvasTargetSize.width) canvas.width = canvasTargetSize.width;
+        if (canvas.height !== canvasTargetSize.height) canvas.height = canvasTargetSize.height;
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this._showBar) this.paintBar();
+        if (this._showGrid) {
             this.paintCells();
             this.paintGrid();
         }
         this.paintSegments();
     }
+    scheduleRepaint() {
+        if (this.repaintTimer === 0) this.repaintTimer = setTimeout(()=>this.repaint(), 0);
+    }
     paintSegments() {
-        const { segments: segments  } = this;
+        const { segments: segments , canvas: canvas  } = this;
         // compute segments
         const controlPointsPerSegment = [];
-        const stepX = $450629445fe8fa68$var$CANVAS_WIDTH / segments.size;
-        const stepY = $450629445fe8fa68$var$CANVAS_HEIGHT / $450629445fe8fa68$var$NUM_BUTTONS;
+        const stepX = canvas.width / segments.size;
+        const stepY = canvas.height / $ac42edad4610f0cf$var$NUM_BUTTONS;
         let cellX = 0;
         for(let i = 0; i < segments.numSegments; i += 1){
             const segment = segments.getSegment(i);
             const controlPoints = [];
-            (0, $1xfY9$strict)(typeof segment !== "undefined");
+            (0, $6GFVM$strict)(typeof segment !== "undefined");
             for(let j = 0; j < segment.length; j += 1){
                 const cellY = segment[j];
                 if (cellY >= 0) {
@@ -538,7 +698,7 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
             }
             controlPointsPerSegment.push(controlPoints);
         }
-        const minCellDim = Math.min($450629445fe8fa68$var$CANVAS_HEIGHT / $450629445fe8fa68$var$NUM_BUTTONS, $450629445fe8fa68$var$CANVAS_WIDTH / segments.size);
+        const minCellDim = Math.min(canvas.height / $ac42edad4610f0cf$var$NUM_BUTTONS, canvas.width / segments.size);
         const { context: context , relativeDotSize: relativeDotSize , dotColor: dotColor , relativeLineWidth: relativeLineWidth , lineColor: lineColor  } = this;
         context.save();
         const dotRadius = minCellDim * relativeDotSize * 0.5;
@@ -568,9 +728,9 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
                     context.moveTo(x0, y0);
                     context.lineTo(x1, y1);
                 } else if (controlPoints.length >= 3) {
-                    const points = (0, $12f1dd3205f197c4$export$cfd1427bc286eaca)(controlPoints, 0.35);
+                    const points = (0, $826d2a65147a9c31$export$cfd1427bc286eaca)(controlPoints, 0.35);
                     const firstPoint = points.shift();
-                    (0, $1xfY9$strict)(typeof firstPoint !== "undefined");
+                    (0, $6GFVM$strict)(typeof firstPoint !== "undefined");
                     context.moveTo(firstPoint.x, firstPoint.y);
                     points.forEach(({ x: x , y: y  })=>context.lineTo(x, y));
                 }
@@ -581,37 +741,37 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         context.restore();
     }
     paintGrid() {
-        const { context: context , segments: segments  } = this;
+        const { canvas: canvas , context: context , segments: segments  } = this;
         context.save();
         context.beginPath();
-        context.strokeStyle = "#b3b2b2";
-        const stepX = $450629445fe8fa68$var$CANVAS_WIDTH / segments.size;
+        context.strokeStyle = this.gridColor;
+        const stepX = canvas.width / segments.size;
         for(let i = 1; i < segments.size; i += 1){
             const x = stepX * i;
             context.moveTo(x, 0);
-            context.lineTo(x, $450629445fe8fa68$var$CANVAS_HEIGHT);
+            context.lineTo(x, canvas.height);
         }
-        const stepY = $450629445fe8fa68$var$CANVAS_HEIGHT / $450629445fe8fa68$var$NUM_BUTTONS;
-        for(let i1 = 1; i1 < $450629445fe8fa68$var$NUM_BUTTONS; i1 += 1){
+        const stepY = canvas.height / $ac42edad4610f0cf$var$NUM_BUTTONS;
+        for(let i1 = 1; i1 < $ac42edad4610f0cf$var$NUM_BUTTONS; i1 += 1){
             const y = stepY * i1;
             context.moveTo(0, y);
-            context.lineTo($450629445fe8fa68$var$CANVAS_WIDTH, y);
+            context.lineTo(canvas.width, y);
         }
         context.stroke();
         context.closePath();
         context.restore();
     }
     paintCells() {
-        const { context: context , segments: segments  } = this;
+        const { canvas: canvas , context: context , segments: segments  } = this;
         context.save();
         context.beginPath();
-        context.fillStyle = "#b3b2b2";
-        const stepX = $450629445fe8fa68$var$CANVAS_WIDTH / segments.size;
-        const stepY = $450629445fe8fa68$var$CANVAS_HEIGHT / $450629445fe8fa68$var$NUM_BUTTONS;
+        context.fillStyle = this.activeCellColor;
+        const stepX = canvas.width / segments.size;
+        const stepY = canvas.height / $ac42edad4610f0cf$var$NUM_BUTTONS;
         let cellX = 0;
         for(let i = 0; i < this.segments.numSegments; i += 1){
             const segment = this.segments.getSegment(i);
-            (0, $1xfY9$strict)(typeof segment !== "undefined");
+            (0, $6GFVM$strict)(typeof segment !== "undefined");
             for(let j = 0; j < segment.length; j += 1){
                 const cellY = segment[j];
                 if (cellY >= 0) {
@@ -627,78 +787,62 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         context.restore();
     }
     paintBar() {
-        const { context: context  } = this;
+        const { canvas: canvas , context: context  } = this;
         context.save();
-        context.fillStyle = "rgba(211,211,211,0.4)";
-        const stepX = $450629445fe8fa68$var$CANVAS_WIDTH / this.numNotes;
-        const x = stepX * this.position;
-        context.fillRect(x, 0, stepX, $450629445fe8fa68$var$CANVAS_WIDTH);
+        context.fillStyle = this.barColor;
+        const stepX = canvas.width / this.numBeats;
+        const x = stepX * this._position;
+        context.fillRect(x, 0, stepX, canvas.height);
         context.restore();
     }
-    constructor(element, options = {}){
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "_options", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "handlers", this.getHandlers());
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "element", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "pane", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "pointers", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "canvas", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "context", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "segments", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "numNotes", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "position", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "loopCount", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "genie", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "gain", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "beatLength", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "relativeNoteLength", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "minMidiNote", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "maxMidiNote", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "allowedPianoKeys", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "resetStateOnLoop", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "sustainInSegments", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "slideInSegments", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "showGrid", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "showBar", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "dotColor", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "relativeDotSize", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "lineColor", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "relativeLineWidth", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "synthOptions", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "synthPool", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "synth", void 0);
-        (0, $1xfY9$swchelperssrc_define_propertymjs)(this, "timer", void 0);
-        console.log("Starting");
-        this._options = {
-            ...$450629445fe8fa68$export$ba43bf67f3d48107,
-            ...options
-        };
-        this.numNotes = $450629445fe8fa68$var$NUM_BEATS;
-        this.segments = new (0, $e64336d5251bab09$export$2e2bcd8739ae039)(this.numNotes, ()=>-1);
-        this.position = 0;
-        this.loopCount = 0;
-        this.resetStateOnLoop = true;
-        this.sustainInSegments = true;
-        this.slideInSegments = true;
-        this.showGrid = true;
-        this.showBar = true;
-        this.beatLength = 250;
-        this.relativeNoteLength = 1.0;
-        this.minMidiNote = 21;
-        this.maxMidiNote = 108;
-        this.dotColor = "#2c2c2c";
-        this.relativeDotSize = 0.0;
-        this.lineColor = "#2c2c2c";
-        this.relativeLineWidth = 0.6;
-        this.allowedPianoKeys = $450629445fe8fa68$var$computeAllowedPianoKeys(this.minMidiNote, this.maxMidiNote);
-        console.log("Starting 2");
+    constructor(element, checkpoint, options = {}){
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "handlers", this.getHandlers());
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "element", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "pane", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "pointers", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "canvas", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "context", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "segments", new (0, $87a0a6ceb46ed965$export$2e2bcd8739ae039)($ac42edad4610f0cf$export$ba43bf67f3d48107.numBeats, ()=>-1));
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_position", 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "genie", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_volume", $ac42edad4610f0cf$export$ba43bf67f3d48107.volume);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_mute", $ac42edad4610f0cf$export$ba43bf67f3d48107.mute);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "gain", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_beatLength", $ac42edad4610f0cf$export$ba43bf67f3d48107.beatLength);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_relativeNoteLength", $ac42edad4610f0cf$export$ba43bf67f3d48107.relativeNoteLength);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_minMidiNote", $ac42edad4610f0cf$export$ba43bf67f3d48107.minMidiNote);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_maxMidiNote", $ac42edad4610f0cf$export$ba43bf67f3d48107.maxMidiNote);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "allowedPianoKeys", []);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "resetStateOnLoop", $ac42edad4610f0cf$export$ba43bf67f3d48107.resetStateOnLoop);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "sustainInSegments", $ac42edad4610f0cf$export$ba43bf67f3d48107.sustainInSegments);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "slideInSegments", $ac42edad4610f0cf$export$ba43bf67f3d48107.slideInSegments);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_showGrid", $ac42edad4610f0cf$export$ba43bf67f3d48107.showGrid);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_showBar", $ac42edad4610f0cf$export$ba43bf67f3d48107.showBar);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_gridColor", $ac42edad4610f0cf$export$ba43bf67f3d48107.gridColor);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_barColor", $ac42edad4610f0cf$export$ba43bf67f3d48107.barColor);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_activeCellColor", $ac42edad4610f0cf$export$ba43bf67f3d48107.activeCellColor);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_dotColor", $ac42edad4610f0cf$export$ba43bf67f3d48107.dotColor);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_relativeDotSize", $ac42edad4610f0cf$export$ba43bf67f3d48107.relativeDotSize);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_lineColor", $ac42edad4610f0cf$export$ba43bf67f3d48107.lineColor);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "_relativeLineWidth", $ac42edad4610f0cf$export$ba43bf67f3d48107.relativeLineWidth);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "synthOptions", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "synthPool", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "synth", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "beatTimer", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "repaintTimer", void 0);
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "canvasTargetSize", {
+            width: 0,
+            height: 0
+        });
+        (0, $6GFVM$swchelperssrc_define_propertymjs)(this, "initPromise", null);
         const canvas = document.createElement("canvas");
-        canvas.width = $450629445fe8fa68$var$CANVAS_WIDTH;
-        canvas.height = $450629445fe8fa68$var$CANVAS_HEIGHT;
+        canvas.width = 0;
+        canvas.height = 0;
         const context = canvas.getContext("2d");
-        (0, $1xfY9$strict)(context !== null);
+        (0, $6GFVM$strict)(context !== null);
         const pane = document.createElement("div");
         pane.setAttribute("touch-action", "none"); // for Pointer Events Polyfill
-        pane.classList.add((0, (/*@__PURE__*/$parcel$interopDefault($1cf11a7bc80fe21b$exports))).pane);
+        pane.classList.add((0, (/*@__PURE__*/$parcel$interopDefault($0b227a8ac7910066$exports))).pane);
         pane.addEventListener("pointerdown", this.handlers.addPointer);
         pane.addEventListener("pointerup", this.handlers.removePointer);
         pane.addEventListener("pointercancel", this.handlers.removePointer);
@@ -706,25 +850,42 @@ class $450629445fe8fa68$export$2e2bcd8739ae039 {
         pane.appendChild(canvas);
         while(element.firstChild)element.firstChild.remove();
         element.appendChild(pane);
-        this.pane = pane;
         this.element = element;
+        this.pane = pane;
         this.canvas = canvas;
         this.context = context;
+        const resizeObserver = new $ac42edad4610f0cf$var$ResizeObserver((entries)=>{
+            entries.forEach((entry)=>{
+                const { width: width , height: height  } = entry.contentRect;
+                this.canvasTargetSize = {
+                    width: width,
+                    height: height
+                };
+                this.scheduleRepaint();
+            });
+        });
+        resizeObserver.observe(pane);
         this.pointers = new Map();
-        this.genie = new (0, $1xfY9$PianoGenie)($450629445fe8fa68$var$PIANO_GENIE_CHECKPOINT);
-        this.gain = new $1xfY9$Gain(1).toDestination();
-        this.synthOptions = $450629445fe8fa68$var$SYNTH_OPTIONS;
+        this.genie = new (0, $6GFVM$PianoGenie)(checkpoint.href);
+        this.gain = new $6GFVM$Gain(1).toDestination();
+        this.synthOptions = $ac42edad4610f0cf$var$SYNTH_OPTIONS;
         this.synthPool = [];
         this.synth = null;
-        this.timer = 0;
-        this.updateGrid();
+        this.beatTimer = 0;
+        this.repaintTimer = 0;
+        const optionsWithDefaults = {
+            ...$ac42edad4610f0cf$export$ba43bf67f3d48107,
+            ...options
+        };
+        Object.assign(this, optionsWithDefaults);
+        this.repaint();
     }
 }
 
 
 
-var $e8a6df3c5af17b1e$export$2e2bcd8739ae039 = (0, $450629445fe8fa68$export$2e2bcd8739ae039);
+var $da7e591f815ee7c7$export$2e2bcd8739ae039 = (0, $ac42edad4610f0cf$export$2e2bcd8739ae039);
 
 
-export {$e8a6df3c5af17b1e$export$2e2bcd8739ae039 as default, $450629445fe8fa68$export$ba43bf67f3d48107 as defaultOptions};
+export {$da7e591f815ee7c7$export$2e2bcd8739ae039 as default, $ac42edad4610f0cf$export$ba43bf67f3d48107 as defaultOptions};
 //# sourceMappingURL=index.mjs.map
