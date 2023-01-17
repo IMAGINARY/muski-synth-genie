@@ -1,11 +1,15 @@
 /* eslint-disable no-console */
 import { tf, PianoGenie } from '@magenta/music';
 import * as Tone from 'tone';
+import { ResizeObserver as ResizeObserverPolyfill } from '@juggle/resize-observer';
 import { strict as assert } from 'assert';
 
 import classes from '../scss/synth-genie.module.scss';
 import { getRelativePointerPosition, getCurvePoints, clamp } from './util';
 import Segments from './segments';
+
+// eslint-disable-next-line compat/compat
+const ResizeObserver = window.ResizeObserver || ResizeObserverPolyfill;
 
 tf.disableDeprecationWarnings();
 
@@ -57,9 +61,6 @@ function computeAllowedPianoKeys(minMidiNote: number, maxMidiNote: number) {
 }
 
 const TEMPERATURE = 0.25;
-
-const CANVAS_WIDTH = 512;
-const CANVAS_HEIGHT = 256;
 
 export type SynthGenieOptions = {
   resetStateOnLoop: boolean;
@@ -192,14 +193,19 @@ export default class SynthGenie<T extends Element> {
 
   protected repaintTimer: ReturnType<typeof setTimeout> | 0;
 
+  protected canvasTargetSize: { width: number; height: number } = {
+    width: 0,
+    height: 0,
+  };
+
   protected constructor(
     element: T,
     checkpoint: URL,
     options: Partial<SynthGenieOptions> = {},
   ) {
     const canvas = document.createElement('canvas');
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
+    canvas.width = 0;
+    canvas.height = 0;
     const context = canvas.getContext('2d');
     assert(context !== null);
 
@@ -215,10 +221,19 @@ export default class SynthGenie<T extends Element> {
     while (element.firstChild) element.firstChild.remove();
     element.appendChild(pane);
 
-    this.pane = pane;
     this.element = element;
+    this.pane = pane;
     this.canvas = canvas;
     this.context = context;
+    const resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        console.log(entry);
+        const { width, height } = entry.contentRect;
+        this.canvasTargetSize = { width, height };
+        this.scheduleRepaint();
+      });
+    });
+    resizeObserver.observe(pane);
 
     this.pointers = new Map();
 
@@ -636,6 +651,13 @@ export default class SynthGenie<T extends Element> {
       this.repaintTimer = 0;
     }
 
+    const { canvas, context, canvasTargetSize } = this;
+
+    if (canvas.width !== canvasTargetSize.width)
+      canvas.width = canvasTargetSize.width;
+    if (canvas.height !== canvasTargetSize.height)
+      canvas.height = canvasTargetSize.height;
+
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this._showBar) {
       this.paintBar();
@@ -655,12 +677,12 @@ export default class SynthGenie<T extends Element> {
   }
 
   protected paintSegments() {
-    const { segments } = this;
+    const { segments, canvas } = this;
 
     // compute segments
     const controlPointsPerSegment: { x: number; y: number }[][] = [];
-    const stepX = CANVAS_WIDTH / segments.size;
-    const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
+    const stepX = canvas.width / segments.size;
+    const stepY = canvas.height / NUM_BUTTONS;
     let cellX = 0;
     for (let i = 0; i < segments.numSegments; i += 1) {
       const segment = segments.getSegment(i);
@@ -679,8 +701,8 @@ export default class SynthGenie<T extends Element> {
     }
 
     const minCellDim = Math.min(
-      CANVAS_HEIGHT / NUM_BUTTONS,
-      CANVAS_WIDTH / segments.size,
+      canvas.height / NUM_BUTTONS,
+      canvas.width / segments.size,
     );
 
     const { context, relativeDotSize, dotColor, relativeLineWidth, lineColor } =
@@ -732,22 +754,22 @@ export default class SynthGenie<T extends Element> {
   }
 
   protected paintGrid() {
-    const { context, segments } = this;
+    const { canvas, context, segments } = this;
 
     context.save();
     context.beginPath();
     context.strokeStyle = '#b3b2b2';
-    const stepX = CANVAS_WIDTH / segments.size;
+    const stepX = canvas.width / segments.size;
     for (let i = 1; i < segments.size; i += 1) {
       const x = stepX * i;
       context.moveTo(x, 0);
-      context.lineTo(x, CANVAS_HEIGHT);
+      context.lineTo(x, canvas.height);
     }
-    const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
+    const stepY = canvas.height / NUM_BUTTONS;
     for (let i = 1; i < NUM_BUTTONS; i += 1) {
       const y = stepY * i;
       context.moveTo(0, y);
-      context.lineTo(CANVAS_WIDTH, y);
+      context.lineTo(canvas.width, y);
     }
     context.stroke();
     context.closePath();
@@ -755,13 +777,13 @@ export default class SynthGenie<T extends Element> {
   }
 
   protected paintCells() {
-    const { context, segments } = this;
+    const { canvas, context, segments } = this;
 
     context.save();
     context.beginPath();
     context.fillStyle = '#b3b2b2';
-    const stepX = CANVAS_WIDTH / segments.size;
-    const stepY = CANVAS_HEIGHT / NUM_BUTTONS;
+    const stepX = canvas.width / segments.size;
+    const stepY = canvas.height / NUM_BUTTONS;
     let cellX = 0;
     for (let i = 0; i < this.segments.numSegments; i += 1) {
       const segment = this.segments.getSegment(i);
@@ -782,13 +804,13 @@ export default class SynthGenie<T extends Element> {
   }
 
   protected paintBar() {
-    const { context } = this;
+    const { canvas, context } = this;
 
     context.save();
     context.fillStyle = 'rgba(211,211,211,0.4)';
-    const stepX = CANVAS_WIDTH / this.numBeats;
+    const stepX = canvas.width / this.numBeats;
     const x = stepX * this._position;
-    context.fillRect(x, 0, stepX, CANVAS_WIDTH);
+    context.fillRect(x, 0, stepX, canvas.height);
     context.restore();
   }
 }
