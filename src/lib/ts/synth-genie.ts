@@ -73,7 +73,11 @@ export type SynthGenieOptions = {
 
   numBeats: number;
 
+  mute: boolean;
+
   volume: number;
+
+  pause: boolean;
 
   beatLength: number;
 
@@ -98,25 +102,17 @@ export type SynthGenieOptions = {
 
 const defaultOptions: Readonly<SynthGenieOptions> = {
   resetStateOnLoop: true,
-
   sustainInSegments: true,
-
   slideInSegments: false,
-
   numBeats: 16,
-
+  mute: false,
   volume: 0.75,
-
+  pause: false,
   beatLength: 240,
-
   relativeNoteLength: 0.9,
-
   minMidiNote: 21,
-
   maxMidiNote: 108,
-
   showGrid: false,
-
   showBar: false,
   dotColor: '#2c2c2c',
   relativeDotSize: 0.0,
@@ -133,10 +129,10 @@ type CellData = {
   cellY: number;
 };
 
-export default class SynthGenie {
+export default class SynthGenie<T extends Element> {
   protected handlers = this.getHandlers();
 
-  public readonly element: Element;
+  public readonly element: T;
 
   protected pane: HTMLDivElement;
 
@@ -146,15 +142,18 @@ export default class SynthGenie {
 
   protected context: RenderingContext2D;
 
-  protected segments: Segments<number> = new Segments(1, () => -1);
+  protected segments: Segments<number> = new Segments(
+    defaultOptions.numBeats,
+    () => -1,
+  );
 
   protected _position = 0;
 
   protected genie: PianoGenie;
 
-  protected _volume = 0;
+  protected _volume: number = defaultOptions.volume;
 
-  protected _mute = false;
+  protected _mute: boolean = defaultOptions.mute;
 
   protected gain: Tone.Gain;
 
@@ -196,10 +195,7 @@ export default class SynthGenie {
 
   protected repaintTimer: ReturnType<typeof setTimeout> | 0;
 
-  protected constructor(
-    element: Element,
-    options: Partial<SynthGenieOptions> = {},
-  ) {
+  protected constructor(element: T, options: Partial<SynthGenieOptions> = {}) {
     const canvas = document.createElement('canvas');
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
@@ -234,18 +230,22 @@ export default class SynthGenie {
     this.beatTimer = 0;
     this.repaintTimer = 0;
 
-    Object.assign(this, options);
-
-    this.updateAllowedPianoKeys();
+    const optionsWithDefaults = { ...defaultOptions, ...options };
+    Object.assign(this, optionsWithDefaults);
     this.repaint();
   }
 
-  static async create(
-    element: Element,
+  static async create<T extends Element>(
+    element: T,
     options: Partial<SynthGenieOptions> = {},
   ) {
-    const synthGenie = new SynthGenie(element, options);
+    const synthGenie = new SynthGenie<T>(element, options);
+    const pauseState = synthGenie.pause;
+    // do not start playback before everything is initialized
+    synthGenie.pause = true;
     await synthGenie.init();
+    synthGenie.pause = pauseState;
+
     return synthGenie;
   }
 
@@ -279,7 +279,7 @@ export default class SynthGenie {
   }
 
   get volume(): number {
-    return this.gain.gain.value;
+    return this._volume;
   }
 
   set volume(v: number) {
@@ -292,10 +292,10 @@ export default class SynthGenie {
   }
 
   set beatLength(l: number) {
-    const wasPlaying = this.isPlaying();
-    this.pause();
+    const pauseState = this.pause;
+    this.pause = true;
     this._beatLength = Math.max(0, l);
-    if (wasPlaying) this.play();
+    this.pause = pauseState;
   }
 
   get relativeNoteLength(): number {
@@ -380,16 +380,25 @@ export default class SynthGenie {
     this.scheduleRepaint();
   }
 
-  play() {
-    if (this.beatTimer === 0) {
-      this.beatTimer = setTimeout(() => {
-        this.beatTimer = setInterval(() => this.playBeat(), this.beatLength);
-      }, 0);
-    }
+  get(): SynthGenieOptions {
+    return Object.fromEntries(
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      Object.keys(defaultOptions).map((key) => [key, this[key] as unknown]),
+    ) as SynthGenieOptions;
   }
 
-  pause() {
-    if (this.beatTimer !== 0) {
+  set(options: Partial<SynthGenieOptions>) {
+    Object.assign(this, options);
+  }
+
+  get pause(): boolean {
+    return this.beatTimer !== 0;
+  }
+
+  set pause(pause: boolean) {
+    if (pause && this.beatTimer !== 0) {
+      // pause
       clearTimeout(this.beatTimer);
       clearInterval(this.beatTimer);
       this.beatTimer = 0;
@@ -397,11 +406,12 @@ export default class SynthGenie {
         this.releaseAndFreeSynth(this.synth, 0);
         this.synth = null;
       }
+    } else if (!pause && this.beatTimer === 0) {
+      // play
+      this.beatTimer = setTimeout(() => {
+        this.beatTimer = setInterval(() => this.playBeat(), this.beatLength);
+      }, 0);
     }
-  }
-
-  isPlaying() {
-    return this.beatTimer !== 0;
   }
 
   protected playBeat() {
@@ -482,8 +492,6 @@ export default class SynthGenie {
     const { genie } = this;
     await genie.initialize();
     console.log('🧞‍♀️ ready!');
-
-    this.play();
   }
 
   protected getHandlers() {
@@ -621,6 +629,8 @@ export default class SynthGenie {
   }
 
   public repaint() {
+    clearTimeout(this.repaintTimer);
+    this.repaintTimer = 0;
     this.context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     if (this._showBar) {
       this.paintBar();
@@ -635,10 +645,7 @@ export default class SynthGenie {
 
   public scheduleRepaint() {
     if (this.repaintTimer !== 0) {
-      this.repaintTimer = setTimeout(() => {
-        this.repaintTimer = 0;
-        this.repaint();
-      }, 0);
+      this.repaintTimer = setTimeout(() => this.repaint(), 0);
     }
   }
 

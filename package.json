@@ -17,11 +17,12 @@
     "node": ">=16.0.0"
   },
   "browserslist": [
-    "> 0.2% and not dead"
+    "> 0.2% and not dead and not OperaMini all"
   ],
   "source": "src/lib/ts/index.ts",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
+  "muski-min": "dist/muski-synth-genie.min.js",
   "types": "dist/index.d.ts",
   "targets": {
     "app": {
@@ -37,6 +38,14 @@
           "> 0.2% and not dead"
         ]
       }
+    },
+    "muski-min": {
+      "source": "src/muski/ts/index.ts",
+      "context": "browser",
+      "includeNodeModules": true,
+      "isLibrary": false,
+      "outputFormat": "global",
+      "optimize": true
     },
     "main": {},
     "module": {},
@@ -86,12 +95,15 @@
   "scripts": {
     "serve": "parcel serve --dist-dir dist-dev --target app",
     "watch:app": "parcel watch --target app",
-    "clean": "npm run clean:lib && npm run clean:app",
+    "watch:muski": "parcel watch --no-hmr --target muski-min",
+    "clean": "npm run clean:lib && npm run clean:app && npm run clean:muski",
     "clean:lib": "rimraf dist/index.*",
     "clean:app": "rimraf app",
+    "clean:muski": "rimraf 'dist/muski-synth-genie.*'",
     "build": "npm run clean && parcel build --public-url .",
-    "build:lib": "npm run clean:lib && parcel build --public-url . --target main --target module --target types",
+    "build:lib": "npm run clean:lib && parcel build --target main --target module --target types",
     "build:app": "npm run clean:app && parcel build --public-url . --target app",
+    "build:muski": "npm run clean:muski && parcel build --target muski-min",
     "format": "prettier --write '.'",
     "doc": "typedoc",
     "lint": "npm run lint:scripts; npm run lint:styles",

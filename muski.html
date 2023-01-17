@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Synth-Genie Demo</title>
+    <link rel="stylesheet" href="dist/muski-synth-genie.min.css" />
+    <script src="https://unpkg.com/pepjs@0.5.3/dist/pep.js"></script>
+    <style>
+      #muski-synth-genie-wrapper {
+        position: relative;
+        width: calc(512px + 2px);
+        height: calc(256px + 2px);
+      }
+
+      #muski-synth-genie {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="muski-synth-genie-wrapper">
+      <div
+        id="muski-synth-genie"
+        data-component="muski-synth-genie"
+        data-show-bar
+      ></div>
+    </div>
+  </body>
+</html>

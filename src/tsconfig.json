@@ -14,5 +14,5 @@
     "typeRoots": ["./lib/ts", "../node_modules/@types"],
     "plugins": [{ "name": "typescript-plugin-css-modules" }]
   },
-  "include": ["./lib/ts/**/*", "./app/ts/**/*"]
+  "include": ["./lib/ts/**/*", "./app/ts/**/*", "./muski/ts/**/*"]
 }
