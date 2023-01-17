@@ -631,9 +631,12 @@ export default class SynthGenie<T extends Element> {
   }
 
   public repaint() {
-    clearTimeout(this.repaintTimer);
-    this.repaintTimer = 0;
-    this.context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    if (this.repaintTimer !== 0) {
+      clearTimeout(this.repaintTimer);
+      this.repaintTimer = 0;
+    }
+
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (this._showBar) {
       this.paintBar();
     }
@@ -646,7 +649,7 @@ export default class SynthGenie<T extends Element> {
   }
 
   public scheduleRepaint() {
-    if (this.repaintTimer !== 0) {
+    if (this.repaintTimer === 0) {
       this.repaintTimer = setTimeout(() => this.repaint(), 0);
     }
   }
