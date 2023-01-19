@@ -201,12 +201,12 @@ class $87a0a6ceb46ed965$export$2e2bcd8739ae039 {
         ];
         const clampedX0 = Math.min(this.size - 1, Math.max(x0, 0));
         const clampedX1 = Math.min(this.size - 1, Math.max(x1, 0));
-        const { segmentIndex: segmentIndex01  } = this.findSegmentIndex(clampedX0);
-        const { segmentIndex: segmentIndex11  } = this.findSegmentIndex(clampedX1);
-        for(let i = 0; i < segmentIndex11 - segmentIndex01; i += 1)this.joinSegments(segmentIndex01 + 1);
+        const { segmentIndex: segmentIndex0  } = this.findSegmentIndex(clampedX0);
+        const { segmentIndex: segmentIndex1  } = this.findSegmentIndex(clampedX1);
+        for(let i = 0; i < segmentIndex1 - segmentIndex0; i += 1)this.joinSegments(segmentIndex0 + 1);
         return [
-            x0 < 0 ? -1 : segmentIndex01,
-            x1 >= this.size ? -1 : segmentIndex11
+            x0 < 0 ? -1 : segmentIndex0,
+            x1 >= this.size ? -1 : segmentIndex1
         ];
     }
     join(x0, x1) {
@@ -627,7 +627,7 @@ class $ac42edad4610f0cf$export$2e2bcd8739ae039 {
         const { cellX: x1 , cellY: y1  } = second;
         const slope = (y1 - y0) / (x1 - x0);
         const { segments: segments  } = this;
-        const [firstSegmentIndex1, secondSegmentIndex1] = segments.join(x0, x1);
+        const [firstSegmentIndex, secondSegmentIndex] = segments.join(x0, x1);
         const clampedX0 = Math.min(segments.size - 1, Math.max(x0, 0));
         const clampedX1 = Math.min(segments.size - 1, Math.max(x1, 0));
         for(let x = clampedX0; x <= clampedX1; x += 1){
@@ -639,8 +639,8 @@ class $ac42edad4610f0cf$export$2e2bcd8739ae039 {
             } else segments.set(x, y);
         }
         return [
-            firstSegmentIndex1,
-            secondSegmentIndex1
+            firstSegmentIndex,
+            secondSegmentIndex
         ];
     }
     removePointer(pe) {
@@ -752,8 +752,8 @@ class $ac42edad4610f0cf$export$2e2bcd8739ae039 {
             context.lineTo(x, canvas.height);
         }
         const stepY = canvas.height / $ac42edad4610f0cf$var$NUM_BUTTONS;
-        for(let i1 = 1; i1 < $ac42edad4610f0cf$var$NUM_BUTTONS; i1 += 1){
-            const y = stepY * i1;
+        for(let i = 1; i < $ac42edad4610f0cf$var$NUM_BUTTONS; i += 1){
+            const y = stepY * i;
             context.moveTo(0, y);
             context.lineTo(canvas.width, y);
         }
