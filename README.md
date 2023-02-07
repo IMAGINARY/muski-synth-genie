@@ -1,16 +1,7 @@
-# Typescript library with demo app
+# muski-synth-genie
 
-## Installation
-
-Install the package via `npm`:
-
-```shell
-npm install <package-name>
-```
-
-## Usage
-
-Take a look at the `docs` and `src` folders.
+Drawing-based synth powered by Magenta's Piano Genie model for the MusKI
+website.
 
 ## Build
 
@@ -47,15 +38,19 @@ npm run lint
 
 Check out `package.json` for additional `run` scripts.
 
-This project is using Parcel as a build system. The demo is written in HTML,
-SCSS and Typescript.
+This project is using Parcel as a build system. It is written in HTML, SCSS and
+Typescript.
 
 ## Credits
 
-Developed by <author-name> for <company-name>.
+Developed by Christian Stussak for IMAGINARY gGmbH.
+
+This app utilizes the Piano Genie model, which is part of the
+[Google Magenta project](https://magenta.tensorflow.org/) and created by Chris
+Donahue, Ian Simon, Sander Dieleman.
 
 ## License
 
-Copyright © <year> <copyright-holder>
+Copyright 2023 IMAGINARY gGmbH.
 
-Licensed under the MIT license (see the [`LICENSE`](LICENSE) file).
+Licensed under the Apache-2.0 License (see [`LICENSE`](LICENSE)).
