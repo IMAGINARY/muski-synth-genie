@@ -1,4 +1,6 @@
-# Typescript library with demo app
+# muski-synth-genie
+
+Drawing-baseed synth powered by Magenta's Piano Genie model for the MusKI website.
 
 ## Installation
 
@@ -52,10 +54,17 @@ SCSS and Typescript.
 
 ## Credits
 
-Developed by <author-name> for <company-name>.
+Based on Piano Genie, created by Chris Donahue, Ian Simon, Sander Dieleman and part of the 
+[Google Magenta project](https://magenta.tensorflow.org/).
+
+Developed by Christian Stussak for IMAGINARY gGmbH.
 
 ## License
 
-Copyright © <year> <copyright-holder>
+Piano Genie:
+Copyright 2018 Google Inc. All Rights Reserved.
 
-Licensed under the MIT license (see the [`LICENSE`](LICENSE) file).
+Modifications:
+Copyright 2023 IMAGINARY gGmbH.
+
+Licensed under the Apache License (see LICENSE).
